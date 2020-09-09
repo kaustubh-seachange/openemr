@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Edit user.
  *
@@ -10,18 +11,19 @@
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-
 require_once("../globals.php");
-require_once("../../library/acl.inc");
 require_once("$srcdir/calendar.inc");
 require_once("$srcdir/options.inc.php");
 require_once("$srcdir/erx_javascript.inc.php");
 
+use OpenEMR\Common\Acl\AclExtended;
+use OpenEMR\Common\Acl\AclMain;
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Core\Header;
 use OpenEMR\Menu\MainMenuRole;
 use OpenEMR\Menu\PatientMenuRole;
 use OpenEMR\Services\FacilityService;
+use OpenEMR\Services\UserService;
 
 if (!empty($_GET)) {
     if (!CsrfUtils::verifyCsrfToken($_GET["csrf_token_form"])) {
@@ -31,7 +33,7 @@ if (!empty($_GET)) {
 
 $facilityService = new FacilityService();
 
-if (!$_GET["id"] || !acl_check('admin', 'users')) {
+if (!$_GET["id"] || !AclMain::aclCheckCore('admin', 'users')) {
     exit();
 }
 
@@ -48,7 +50,7 @@ $iter = $result[0];
 
 <?php Header::setupHeader(['common','opener']); ?>
 
-<script src="checkpwd_validation.js" type="text/javascript"></script>
+<script src="checkpwd_validation.js"></script>
 
 <!-- validation library -->
 <!--//Not lbf forms use the new validation, please make sure you have the corresponding values in the list Page validation-->
@@ -65,7 +67,7 @@ if (empty($collectthis)) {
 }
 ?>
 
-<script language="JavaScript">
+<script>
 
 /*
  * validation on the form with new client side validation (using validate.js).
@@ -208,7 +210,7 @@ function authorized_clicked() {
 }
 
 </script>
-<style type="text/css">
+<style>
   .physician_type_class{
     width: 150px !important;
   }
@@ -222,17 +224,17 @@ function authorized_clicked() {
 <div class="container">
     <?php
     /*  Get the list ACL for the user */
-    $is_super_user = acl_check('admin', 'super');
-    $acl_name=acl_get_group_titles($iter["username"]);
-    $bg_name='';
-    $bg_count=count($acl_name);
+    $is_super_user = AclMain::aclCheckCore('admin', 'super');
+    $acl_name = AclExtended::aclGetGroupTitles($iter["username"]);
+    $bg_name = '';
+    $bg_count = count($acl_name);
     $selected_user_is_superuser = false;
-    for ($i=0; $i<$bg_count; $i++) {
+    for ($i = 0; $i < $bg_count; $i++) {
         if ($acl_name[$i] == "Emergency Login") {
-            $bg_name=$acl_name[$i];
+            $bg_name = $acl_name[$i];
         }
         //check if user member on group with superuser rule
-        if (is_group_include_superuser($acl_name[$i])) {
+        if (AclExtended::isGroupIncludeSuperuser($acl_name[$i])) {
             $selected_user_is_superuser = true;
         }
     }
@@ -241,11 +243,11 @@ function authorized_clicked() {
 <table><tr><td>
 <span class="title"><?php echo xlt('Edit User'); ?></span>&nbsp;
 </td><td>
-    <a class="btn btn-default btn-save" name='form_save' id='form_save' href='#' onclick='return submitform()' <?php echo $disabled_save; ?>> <span><?php echo xlt('Save');?></span> </a>
+    <a class="btn btn-secondary btn-save" name='form_save' id='form_save' href='#' onclick='return submitform()' <?php echo $disabled_save; ?>> <span><?php echo xlt('Save');?></span> </a>
     <a class="btn btn-link btn-cancel" id='cancel' href='#'><span><?php echo xlt('Cancel');?></span></a>
 </td></tr>
 </table>
-<br>
+<br />
 <FORM NAME="user_form" id="user_form" METHOD="POST" ACTION="usergroup_admin.php">
 <input type="hidden" name="csrf_token_form" value="<?php echo attr(CsrfUtils::collectCsrfToken()); ?>" />
 
@@ -258,7 +260,7 @@ function authorized_clicked() {
 <TABLE border=0 cellpadding=0 cellspacing=0>
 <TR>
     <TD style="width:180px;"><span class=text><?php echo xlt('Username'); ?>: </span></TD>
-    <TD style="width:270px;"><input type=entry name=username style="width:150px;" class="form-control" value="<?php echo attr($iter["username"]); ?>" disabled></td>
+    <TD style="width:270px;"><input type="text" name=username style="width:150px;" class="form-control" value="<?php echo attr($iter["username"]); ?>" disabled></td>
 <?php if (empty($GLOBALS['gbl_ldap_enabled']) || empty($GLOBALS['gbl_ldap_exclusions'])) { ?>
         <TD style="width:200px;"><span class=text>*<?php echo xlt('Your Password'); ?>*: </span></TD>
         <TD class='text' style="width:280px;"><input type='password' name=adminPass style="width:150px;"  class="form-control" value="" autocomplete='off'><font class="mandatory"></font></TD>
@@ -274,42 +276,46 @@ function authorized_clicked() {
 <?php } ?>
 
 <TR height="30" style="valign:middle;">
-  <td class='text'>
-    <?php echo xlt('Clear 2FA'); ?>:
-  </td>
-  <td title='<?php echo xla('Remove multi-factor authentications for this person.'); ?>'>
-    <input type="checkbox" name="clear_2fa" value='1' />
-  </td>
+<td class='text'>
+<?php echo xlt('Clear 2FA'); ?>:
+</td>
+<td title='<?php echo xla('Remove multi-factor authentications for this person.'); ?>'>
+<input type="checkbox" name="clear_2fa" value='1' />
+</td>
 <td colspan="2"><span class=text><?php echo xlt('Provider'); ?>:
- <input type="checkbox" name="authorized" onclick="authorized_clicked()"<?php
-    if ($iter["authorized"]) {
-        echo " checked";
-    } ?> />
- &nbsp;&nbsp;<span class='text'><?php echo xlt('Calendar'); ?>:
- <input type="checkbox" name="calendar"<?php
-    if ($iter["calendar"]) {
-        echo " checked";
-    }
-
-    if (!$iter["authorized"]) {
-        echo " disabled";
-    } ?> />
- &nbsp;&nbsp;<span class='text'><?php echo xlt('Active'); ?>:
- <input type="checkbox" name="active"<?php echo ($iter["active"]) ? " checked" : ""; ?>/>
+<input type="checkbox" name="authorized" onclick="authorized_clicked()"<?php
+if ($iter["authorized"]) {
+    echo " checked";
+} ?> /></span>
+<span class='text'><?php echo xlt('Calendar'); ?>:
+<input type="checkbox" name="calendar"<?php
+if ($iter["calendar"]) {
+    echo " checked";
+}
+if (!$iter["authorized"]) {
+    echo " disabled";
+} ?> /></span>
+<span class=text><?php echo xlt('Portal'); ?>:
+<input type="checkbox" name="portal_user" <?php
+if ($iter["portal_user"]) {
+    echo " checked";
+} ?> /></span>
+<span class='text'><?php echo xlt('Active'); ?>:
+    <input type="checkbox" name="active"<?php echo ($iter["active"]) ? " checked" : ""; ?>/></span>
 </TD>
 </TR>
 
 <TR>
 <TD><span class=text><?php echo xlt('First Name'); ?>: </span></TD>
-<TD><input type=entry name=fname id=fname style="width:150px;" class="form-control" value="<?php echo attr($iter["fname"]); ?>"><span class="mandatory"></span></td>
-<td><span class=text><?php echo xlt('Middle Name'); ?>: </span></TD><td><input type=entry name=mname style="width:150px;"  value="<?php echo attr($iter["mname"]); ?>"></td>
+<TD><input type="text" name=fname id=fname style="width:150px;" class="form-control" value="<?php echo attr($iter["fname"]); ?>"><span class="mandatory"></span></td>
+<td><span class=text><?php echo xlt('Middle Name'); ?>: </span></TD><td><input type="text" name=mname style="width:150px;"  value="<?php echo attr($iter["mname"]); ?>"></td>
 </TR>
 
 <TR>
-<td><span class=text><?php echo xlt('Last Name'); ?>: </span></td><td><input type=entry name=lname id=lname style="width:150px;"  class="form-control" value="<?php echo attr($iter["lname"]); ?>"><span class="mandatory"></span></td>
+<td><span class=text><?php echo xlt('Last Name'); ?>: </span></td><td><input type="text" name=lname id=lname style="width:150px;"  class="form-control" value="<?php echo attr($iter["lname"]); ?>"><span class="mandatory"></span></td>
 <td><span class=text><?php echo xlt('Default Facility'); ?>: </span></td><td><select name=facility_id style="width:150px;" class="form-control">
 <?php
-$fres = $facilityService->getAllBillingLocations();
+$fres = $facilityService->getAllServiceLocations();
 if ($fres) {
     for ($iter2 = 0; $iter2 < sizeof($fres); $iter2++) {
                 $result[$iter2] = $fres[$iter2];
@@ -385,14 +391,36 @@ foreach (array(1 => xl('None{{Authorization}}'), 2 => xl('Only Mine'), 3 => xl('
 <tr>
 <td><span class="text"><?php echo xlt('Taxonomy'); ?>: </span></td>
 <td><input type="text" name="taxonomy" style="width:150px;" class="form-control" value="<?php echo attr($iter["taxonomy"]); ?>"></td>
-<td>&nbsp;</td><td>&nbsp;</td></tr>
+<td><span class="text"><?php echo xlt('Supervisor'); ?>: </span></td>
+<td>
+    <select name="supervisor_id" style="width:150px;" class="form-control">
+        <option value=""><?php echo xlt("Select Supervisor") ?></option>
+        <?php
+        $userService = new UserService();
+        $users = $userService->getActiveUsers();
+        foreach ($users as $activeUser) {
+            $p_id = (int)$activeUser->getId();
+            if ($activeUser->getAuthorized() !== true) {
+                continue;
+            }
+            echo "<option value='" . attr($p_id) . "'";
+            if ((int)$iter["supervisor_id"] === $p_id) {
+                echo " selected";
+            }
+            echo ">" . text($activeUser->getLname()) . ' ' .
+                text($activeUser->getFname()) . ' ' . text($activeUser->getMname()) . "</option>\n";
+        }
+        ?>
+    </select>
+</td>
+</tr>
 
 <tr>
 <td><span class="text"><?php echo xlt('State License Number'); ?>: </span></td>
 <td><input type="text" name="state_license_number" style="width:150px;" class="form-control" value="<?php echo attr($iter["state_license_number"]); ?>"></td>
 <td class='text'><?php echo xlt('NewCrop eRX Role'); ?>:</td>
 <td>
-    <?php echo generate_select_list("erxrole", "newcrop_erx_role", $iter['newcrop_user_role'], '', xl('Select Role'), '', '', '', array('style'=>'width:150px')); ?>
+    <?php echo generate_select_list("erxrole", "newcrop_erx_role", $iter['newcrop_user_role'], '', xl('Select Role'), '', '', '', array('style' => 'width:150px')); ?>
 </td>
 </tr>
 <tr>
@@ -457,8 +485,8 @@ foreach (array(1 => xl('None{{Authorization}}'), 2 => xl('Only Mine'), 3 => xl('
  <td><select id="access_group_id" name="access_group[]" multiple style="width:150px;" class="form-control">
 <?php
 // Collect the access control group of user
-$list_acl_groups = acl_get_group_title_list($is_super_user || $selected_user_is_superuser);
-$username_acl_groups = acl_get_group_titles($iter["username"]);
+$list_acl_groups = AclExtended::aclGetGroupTitleList($is_super_user || $selected_user_is_superuser);
+$username_acl_groups = AclExtended::aclGetGroupTitles($iter["username"]);
 foreach ($list_acl_groups as $value) {
     if (($username_acl_groups) && in_array($value, $username_acl_groups)) {
         // Modified 6-2009 by BM - Translate group name if applicable
@@ -497,8 +525,8 @@ Display red alert if entered password matched one of last three passwords/Displa
 
 <INPUT TYPE="HIDDEN" NAME="secure_pwd" VALUE="<?php echo attr($GLOBALS['secure_password']); ?>">
 </FORM>
-<script language="JavaScript">
-$(function(){
+<script>
+$(function () {
     $("#cancel").click(function() {
           dlgclose();
      });

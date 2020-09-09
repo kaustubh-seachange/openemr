@@ -1,4 +1,5 @@
 <?php
+
 /**
  * main file for the 270 batch creation.
  * This report is the batch report required for batch eligibility verification.
@@ -14,11 +15,10 @@
  * @copyright Copyright (c) 2010 MMF Systems, Inc
  * @copyright Copyright (c) 2016 Terry Hill <terry@lillysystems.com>
  * @copyright Copyright (c) 2017 Brady Miller <brady.g.miller@gmail.com>
- * @copyright Copyright (c) 2019 Jerry Padgett <sjpadgett@gmail.com>
- * @copyright Copyright (c) 2019 Stephen Waite <stephen.waite@cmsvt.com>
+ * @copyright Copyright (c) 2019-2020 Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2019-2020 Stephen Waite <stephen.waite@cmsvt.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
-
 
 require_once("../globals.php");
 require_once("$srcdir/forms.inc");
@@ -27,7 +27,7 @@ require_once "$srcdir/options.inc.php";
 require_once("$srcdir/calendar.inc");
 require_once("$srcdir/appointments.inc.php");
 
-use OpenEMR\Billing\EDI_270;
+use OpenEMR\Billing\EDI270;
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Core\Header;
 
@@ -52,7 +52,7 @@ $form_facility  = $_POST['form_facility'] ? $_POST['form_facility'] : '';
 $form_provider  = $_POST['form_users'] ? $_POST['form_users'] : '';
 $exclude_policy = $_POST['removedrows'] ? $_POST['removedrows'] : '';
 $x12_partner    = $_POST['form_x12'] ? $_POST['form_x12'] : '';
-$X12info        = EDI_270::getX12Partner($x12_partner);
+$X12info        = EDI270::getX12Partner($x12_partner);
 
 // grab appointments, sort by date and make unique to first upcoming appt by pid.
 $appts = fetchAppointments($from_date, $to_date);
@@ -80,7 +80,7 @@ if ($form_provider != "") {
 
 if ($exclude_policy != "") {
     $arrayExplode   =   explode(",", $exclude_policy);
-    array_walk($arrayExplode, 'OpenEMR\Billing\EDI_270::arrFormated');
+    array_walk($arrayExplode, 'OpenEMR\Billing\EDI270::arrFormated');
     $exclude_policy = implode(",", $arrayExplode);
     $where .= " AND i.policy_number NOT IN ($exclude_policy)";
 }
@@ -116,7 +116,7 @@ if ($exclude_policy != "") {
         f.name as facility_name,
         c.cms_id as cms_id,
         c.eligibility_id as eligibility_id,
-        c.name as payer_name 
+        c.name as payer_name
         FROM openemr_postcalendar_events AS e
         LEFT JOIN users AS d on (e.pc_aid is not null and e.pc_aid = d.id)
         LEFT JOIN facility AS f on (f.id = e.pc_facility)
@@ -140,15 +140,15 @@ if ($exclude_policy != "") {
     $facilities     = getUserFacilities($_SESSION['authUserID']);
 
     // Get the Providers information
-    $providers      = EDI_270::getUsernames();
+    $providers      = EDI270::getUsernames();
 
     //Get the x12 partners information
-    $clearinghouses = EDI_270::getX12Partner();
+    $clearinghouses = EDI270::getX12Partner();
 
     if (isset($_POST['form_xmit']) && !empty($_POST['form_xmit']) && $res) {
         $eFlag = !$GLOBALS['disable_eligibility_log'];
         // make the batch request
-        $log = EDI_270::requestRealTimeEligible($res, $X12info, $segTer, $compEleSep, $eFlag);
+        $log = EDI270::requestRealTimeEligible($res, $X12info, $segTer, $compEleSep, $eFlag);
         $e = strpos($log, "Error:");
         if ($e !== false) {
             $log =  text(xlt("One or more transactions failed") .
@@ -179,7 +179,7 @@ if ($exclude_policy != "") {
             strtolower(str_replace(' ', '', $X12info['name'])),
             date("Y-m-d:H:i:s")
         ));
-        EDI_270::print_elig($res, $X12info, $segTer, $compEleSep);
+        EDI270::printElig($res, $X12info, $segTer, $compEleSep);
         exit;
     }
 
@@ -209,7 +209,7 @@ if ($exclude_policy != "") {
 
         <?php Header::setupHeader('datetime-picker'); ?>
 
-        <style type="text/css">
+        <style>
 
             /* specifically include & exclude from printing */
             @media print {
@@ -236,7 +236,7 @@ if ($exclude_policy != "") {
 
         </style>
 
-        <script type="text/javascript">
+        <script>
 
             var stringDelete = <?php echo xlj('Do you want to remove this record?'); ?>;
             var stringBatch  = <?php echo xlj('Please select X12 partner, required to create the 270 batch'); ?>;
@@ -310,7 +310,7 @@ if ($exclude_policy != "") {
 
             }
 
-            $(function() {
+            $(function () {
                 $('.datepicker').datetimepicker({
                     <?php $datetimepicker_timepicker = false; ?>
                     <?php $datetimepicker_showseconds = false; ?>
@@ -331,7 +331,7 @@ if ($exclude_policy != "") {
         <span class='title'><?php echo xlt('Report'); ?> - <?php echo xlt('Eligibility 270 Inquiry Batch'); ?></span>
 
         <div id="report_parameters_daterange">
-            <?php echo text(oeFormatShortDate($form_from_date)) . " &nbsp; " . xlt('to{{Range}}') . "&nbsp; ". text(oeFormatShortDate($form_to_date)); ?>
+            <?php echo text(oeFormatShortDate($form_from_date)) . " &nbsp; " . xlt('to{{Range}}') . "&nbsp; " . text(oeFormatShortDate($form_to_date)); ?>
         </div>
 
         <form method='post' name='theform' id='theform' action='edi_270.php' onsubmit="return top.restoreSession()">
@@ -344,13 +344,13 @@ if ($exclude_policy != "") {
                             <div style='float:left'>
                                 <table class='text'>
                                     <tr>
-                                        <td class='control-label'>
+                                        <td class='col-form-label'>
                                             <?php echo xlt('From'); ?>:
                                         </td>
                                         <td>
                                            <input type='text' class='datepicker form-control' name='form_from_date' id="form_from_date" size='10' value='<?php echo attr(oeFormatShortDate($from_date)); ?>'>
                                         </td>
-                                        <td class='control-label'>
+                                        <td class='col-form-label'>
                                             <?php echo xlt('To{{Range}}'); ?>:
                                         </td>
                                         <td>
@@ -360,13 +360,13 @@ if ($exclude_policy != "") {
                                     </tr>
 
                                     <tr>
-                                        <td class='control-label'>
+                                        <td class='col-form-label'>
                                             <?php echo xlt('Facility'); ?>:
                                         </td>
                                         <td>
                                             <?php dropdown_facility($form_facility, 'form_facility', false);  ?>
                                         </td>
-                                        <td class='control-label'>
+                                        <td class='col-form-label'>
                                             <?php echo xlt('Provider'); ?>:
                                         </td>
                                         <td>
@@ -375,7 +375,7 @@ if ($exclude_policy != "") {
                                                 <?php foreach ($providers as $user) : ?>
                                                     <option value='<?php echo attr($user['id']); ?>'
                                                         <?php echo $form_provider == $user['id'] ? " selected " : null; ?>
-                                                    ><?php echo text($user['fname']." ".$user['lname']); ?></option>
+                                                    ><?php echo text($user['fname'] . " " . $user['lname']); ?></option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </td>
@@ -384,7 +384,7 @@ if ($exclude_policy != "") {
                                     </tr>
 
                                     <tr>
-                                        <td class='control-label'>
+                                        <td class='col-form-label'>
                                             <?php echo xlt('X12 Partner'); ?>:
                                         </td>
                                         <td colspan='5'>
@@ -399,7 +399,7 @@ if ($exclude_policy != "") {
                                                 }
                                                 ?>
                                             </select>
-                                                <span id='emptyVald' style='color:red;font-size:12px;visibility: <?php echo $X12info['id'] ? "hidden" : ""; ?>'> *
+                                                <span id='emptyVald' class='text-danger' style='font-size:12px;visibility: <?php echo $X12info['id'] ? "hidden" : ""; ?>'> *
                                                     <?php echo xlt('Clearing house info required for EDI 270 batch creation.'); ?></span>
                                         </td>
                                     </tr>
@@ -412,15 +412,15 @@ if ($exclude_policy != "") {
                                     <td>
                                         <div class="text-center">
                                             <div class="btn-group" role="group">
-                                                <a href='#' class='btn btn-default btn-refresh' onclick='validate_policy(); $("#theform").submit();'>
+                                                <a href='#' class='btn btn-secondary btn-refresh' onclick='validate_policy(); $("#theform").submit();'>
                                                     <?php echo xlt('Refresh'); ?>
                                                 </a>
-                                                <a href='#' class='btn btn-default btn-transmit' onclick='return validate_batch(false);'>
+                                                <a href='#' class='btn btn-secondary btn-transmit' onclick='return validate_batch(false);'>
                                                     <?php echo xlt('Create batch'); ?>
                                                     <input type='hidden' name='form_savefile' id='form_savefile' value=''></input>
 
                                                     <?php if ($GLOBALS['enable_oa']) {
-                                                        echo "<a href='#' class='btn btn-default btn-transmit' onclick='return validate_batch(true);'>" . xlt('Request Eligibility') . "</a>\n";
+                                                        echo "<a href='#' class='btn btn-secondary btn-transmit' onclick='return validate_batch(true);'>" . xlt('Request Eligibility') . "</a>\n";
                                                     }
                                                     ?>
                                                     <input type='hidden' name='form_xmit' id='form_xmit' value=''></input>
@@ -442,12 +442,12 @@ if ($exclude_policy != "") {
 
         <?php
         if ($res) {
-            EDI_270::show_elig($res, $X12info, $segTer, $compEleSep);
+            EDI270::showElig($res, $X12info, $segTer, $compEleSep);
         }
         ?>
     </body>
 
-    <script language='JavaScript'>
+    <script>
         <?php
         if ($alertmsg) {
             echo " alert(" . js_escape($alertmsg) . ");\n";

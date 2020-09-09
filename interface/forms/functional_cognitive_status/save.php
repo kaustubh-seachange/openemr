@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Functional cognitive status form save.php.
  *
@@ -12,8 +13,7 @@
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-
-require_once("../../globals.php");
+require_once(__DIR__ . "/../../globals.php");
 require_once("$srcdir/api.inc");
 require_once("$srcdir/forms.inc");
 
@@ -58,8 +58,8 @@ if (!empty($code_text)) {
             groupname = ?,
             user = ?,
             encounter = ?,
-            authorized = ?, 
-            activity = '?,
+            authorized = ?,
+            activity = ?,
             code = ?,
             codetext = ?,
             description= ?,
@@ -83,7 +83,6 @@ if (!empty($code_text)) {
     endforeach;
 }
 
-$_SESSION["encounter"] = $encounter;
 formHeader("Redirecting....");
 formJump();
 formFooter();

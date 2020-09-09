@@ -1,4 +1,5 @@
 <?php
+
 require_once(dirname(__FILE__) . "/../interface/globals.php");
 
 $type = $_GET['type'];
@@ -11,15 +12,14 @@ $couch_revid = $d->get_couch_revid();
 
 if ($couch_docid && $couch_revid) {
     $couch = new CouchDB();
-    $data = array($GLOBALS['couchdb_dbase'],$couch_docid);
-    $resp = $couch->retrieve_doc($data);
+    $resp = $couch->retrieve_doc($couch_docid);
     $xml = base64_decode($resp->data);
-    if ($content=='' && $GLOBALS['couchdb_log']==1) {
-        $log_content = date('Y-m-d H:i:s')." ==> Retrieving document\r\n";
-        $log_content = date('Y-m-d H:i:s')." ==> URL: ".$url."\r\n";
-        $log_content .= date('Y-m-d H:i:s')." ==> CouchDB Document Id: ".$couch_docid."\r\n";
-        $log_content .= date('Y-m-d H:i:s')." ==> CouchDB Revision Id: ".$couch_revid."\r\n";
-        $log_content .= date('Y-m-d H:i:s')." ==> Failed to fetch document content from CouchDB.\r\n";
+    if ($content == '' && $GLOBALS['couchdb_log'] == 1) {
+        $log_content = date('Y-m-d H:i:s') . " ==> Retrieving document\r\n";
+        $log_content = date('Y-m-d H:i:s') . " ==> URL: " . $url . "\r\n";
+        $log_content .= date('Y-m-d H:i:s') . " ==> CouchDB Document Id: " . $couch_docid . "\r\n";
+        $log_content .= date('Y-m-d H:i:s') . " ==> CouchDB Revision Id: " . $couch_revid . "\r\n";
+        $log_content .= date('Y-m-d H:i:s') . " ==> Failed to fetch document content from CouchDB.\r\n";
         //$log_content .= date('Y-m-d H:i:s')." ==> Will try to download file from HardDisk if exists.\r\n\r\n";
         $this->document_upload_download_log($d->get_foreign_id(), $log_content);
         die(xlt("File retrieval from CouchDB failed"));
@@ -30,7 +30,7 @@ if ($couch_docid && $couch_revid) {
     $from_all = explode("/", $url);
     $from_filename = array_pop($from_all);
     $from_pathname_array = array();
-    for ($i=0; $i<$d->get_path_depth(); $i++) {
+    for ($i = 0; $i < $d->get_path_depth(); $i++) {
         $from_pathname_array[] = array_pop($from_all);
     }
 
@@ -51,7 +51,7 @@ if ($type == "CCR") {
     $xmlDom = new DOMDocument();
     $xmlDom->loadXML($xml);
     $ss = new DOMDocument();
-    $ss->load(dirname(__FILE__).'/stylesheet/ccr.xsl');
+    $ss->load(dirname(__FILE__) . '/stylesheet/ccr.xsl');
     $proc = new XSLTProcessor();
     $proc->importStylesheet($ss);
     $s_html = $proc->transformToXML($xmlDom);
@@ -60,7 +60,7 @@ if ($type == "CCR") {
     $xmlDom = new DOMDocument();
     $xmlDom->loadXML($xml);
     $ss = new DOMDocument();
-        $ss->load(dirname(__FILE__).'/stylesheet/cda.xsl');
+        $ss->load(dirname(__FILE__) . '/stylesheet/cda.xsl');
         $xslt = new XSLTProcessor();
         $xslt->importStyleSheet($ss);
         $html = $xslt->transformToXML($xmlDom);

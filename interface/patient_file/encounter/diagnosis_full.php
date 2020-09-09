@@ -1,4 +1,5 @@
 <?php
+
 /**
  * diagnosis_full.php
  *
@@ -9,11 +10,11 @@
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-
 require_once("../../globals.php");
 
 use OpenEMR\Billing\BillingUtilities;
 use OpenEMR\Common\Csrf\CsrfUtils;
+use OpenEMR\Core\Header;
 
 $mode = $_GET['mode'];
 $id   = $_GET['id'];
@@ -34,17 +35,17 @@ if (isset($mode)) {
 ?>
 <html>
 <head>
-<link rel="stylesheet" href="<?php echo $css_header;?>" type="text/css">
+<?php Header::setupHeader(); ?>
 </head>
 
 <body class="body_top">
 
 <a href="encounter_bottom.php" onclick="top.restoreSession()">
 
-<span class=title><?php echo xlt('Billing'); ?></span>
-<font class=more><?php echo text($tback); ?></font></a>
+<span class='title'><?php echo xlt('Billing'); ?></span>
+<span class='more'><?php echo text($tback); ?></span></a>
 
-<table border=0 cellpadding=3 cellspacing=0>
+<table class='table-borderless' cellpadding='3' cellspacing='0'>
 
 <?php
 if ($result = BillingUtilities::getBillingByEncounter($pid, $encounter, "*")) {
@@ -52,7 +53,7 @@ if ($result = BillingUtilities::getBillingByEncounter($pid, $encounter, "*")) {
     foreach ($result as $iter) {
         if ($iter["code_type"] == "ICD9") {
             $html = "<tr>";
-            $html .= "<td valign=\"middle\"></td>" .
+            $html .= "<td class='align-middle'></td>" .
                 "<td><div><a class='small' href='diagnosis_full.php' onclick='top.restoreSession()'><b>" .
                 text($iter["code"]) . "</b> " . text(ucwords(strtolower($iter["code_text"]))) .
                 "</a></div></td>\n";
@@ -61,7 +62,7 @@ if ($result = BillingUtilities::getBillingByEncounter($pid, $encounter, "*")) {
         } elseif ($iter["code_type"] == "COPAY") {
             $billing_html[$iter["code_type"]] .= "<tr><td></td>" .
                 "<td><a class='small' href='diagnosis_full.php' onclick='top.restoreSession()'><b>" .
-                text($iter["code"])."</b> " . text(ucwords(strtolower($iter["code_text"]))) .
+                text($iter["code"]) . "</b> " . text(ucwords(strtolower($iter["code_text"]))) .
                 "</a></td>\n";
         } else {
             $billing_html[$iter["code_type"]] .= "<tr><td></td>" .

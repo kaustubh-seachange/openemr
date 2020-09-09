@@ -19,3 +19,10 @@ ccdaservice/node_modules
 # dev editor configs
 /.idea/*
 /nbproject/*
+.DS_Store
+.buildpath
+.project
+.settings
+
+# testing
+.phpunit.result.cache

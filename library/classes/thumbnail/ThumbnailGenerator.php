@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Adding thumbnails to all files
  *
@@ -127,7 +128,7 @@ class ThumbnailGenerator
         $from_all = explode("/", $url);
         $from_filename = array_pop($from_all);
         $from_pathname_array = array();
-        for ($i=0; $i<$path_depth; $i++) {
+        for ($i = 0; $i < $path_depth; $i++) {
             $from_pathname_array[] = array_pop($from_all);
         }
 
@@ -168,8 +169,7 @@ class ThumbnailGenerator
             $this->couch_obj = new CouchDB();
         }
 
-        $data = array($GLOBALS['couchdb_dbase'],$doc_id);
-        $resp = $this->couch_obj->retrieve_doc($data);
+        $resp = $this->couch_obj->retrieve_doc($doc_id);
 
         if (empty($resp->data)) {
             return false;
@@ -190,7 +190,6 @@ class ThumbnailGenerator
 
         $couch_row['th_data'] = json_encode(base64_encode($new_file_content));
         $array_update = array_values($couch_row);
-        array_unshift($array_update, $GLOBALS['couchdb_dbase']);
         $update_couch = $this->couch_obj->update_doc($array_update);
 
         $thumb_name = $this->get_thumb_name($file_name);

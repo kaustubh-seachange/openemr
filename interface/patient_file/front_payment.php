@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Front payment gui.
  *
@@ -6,13 +7,12 @@
  * @link      http://www.open-emr.org
  * @author    Rod Roark <rod@sunsetsystems.com>
  * @author    Brady Miller <brady.g.miller@gmail.com>
- * @copyright Copyright (c) 2006-2016 Rod Roark <rod@sunsetsystems.com>
+ * @copyright Copyright (c) 2006-2020 Rod Roark <rod@sunsetsystems.com>
  * @copyright Copyright (c) 2017-2018 Brady Miller <brady.g.miller@gmail.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
 require_once("../globals.php");
-require_once("$srcdir/acl.inc");
 require_once("$srcdir/patient.inc");
 require_once("$srcdir/payment.inc.php");
 require_once("$srcdir/forms.inc");
@@ -21,6 +21,7 @@ require_once("$srcdir/options.inc.php");
 require_once("$srcdir/encounter_events.inc.php");
 
 use OpenEMR\Billing\BillingUtilities;
+use OpenEMR\Common\Acl\AclMain;
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Core\Header;
 use OpenEMR\OeUI\OemrUI;
@@ -59,7 +60,7 @@ function rawbucks($amount)
 
 // Display a row of data for an encounter.
 //
-$var_index=0;
+$var_index = 0;
 function echoLine($iname, $date, $charges, $ptpaid, $inspaid, $duept, $encounter = 0, $copay = 0, $patcopay = 0)
 {
     global $var_index;
@@ -202,7 +203,7 @@ if ($_POST['form_save']) {
                 //----------------------------------------------------------------------------------------------------
                   //Fetching the existing code and modifier
                   $ResultSearchNew = sqlStatement(
-                      "SELECT * FROM billing LEFT JOIN code_types ON billing.code_type=code_types.ct_key ".
+                      "SELECT * FROM billing LEFT JOIN code_types ON billing.code_type=code_types.ct_key " .
                       "WHERE code_types.ct_fee=1 AND billing.activity!=0 AND billing.pid =? AND encounter=? ORDER BY billing.code,billing.modifier",
                       array($form_pid, $enc)
                   );
@@ -227,8 +228,8 @@ if ($_POST['form_save']) {
 
                     sqlBeginTrans();
                     $sequence_no = sqlQuery("SELECT IFNULL(MAX(sequence_no),0) + 1 AS increment FROM       ar_activity WHERE pid = ? AND encounter = ?", array($form_pid, $enc));
-                    $insrt_id=sqlInsert(
-                        "INSERT INTO ar_activity (pid,encounter,sequence_no,code_type,code,modifier,payer_type,post_time,post_user,session_id,pay_amount,account_code)".
+                    $insrt_id = sqlInsert(
+                        "INSERT INTO ar_activity (pid,encounter,sequence_no,code_type,code,modifier,payer_type,post_time,post_user,session_id,pay_amount,account_code)" .
                         " VALUES (?,?,?,?,?,?,0,now(),?,?,?,'PCP')",
                         array($form_pid, $enc, $sequence_no['increment'], $Codetype, $Code, $Modifier, $_SESSION['authUserID'], $session_id, $amount)
                     );
@@ -275,7 +276,7 @@ if ($_POST['form_save']) {
 
                             $resMoneyGot = sqlStatement(
                                 "SELECT sum(pay_amount) as PatientPay FROM ar_activity where pid =? and " .
-                                "encounter =? and payer_type=0 and account_code='PCP'",
+                                "encounter = ? and payer_type = 0 and account_code = 'PCP' AND deleted IS NULL",
                                 array($form_pid, $enc)
                             );//new fees screen copay gives account_code='PCP'
                             $rowMoneyGot = sqlFetchArray($resMoneyGot);
@@ -296,7 +297,7 @@ if ($_POST['form_save']) {
                         $Fee = $RowSearch['fee'];
 
                         $resMoneyGot = sqlStatement(
-                            "SELECT sum(pay_amount) as MoneyGot FROM ar_activity where pid =? " .
+                            "SELECT sum(pay_amount) as MoneyGot FROM ar_activity where pid = ? AND deleted IS NULL " .
                             "and code_type=? and code=? and modifier=? and encounter =? and !(payer_type=0 and account_code='PCP')",
                             array($form_pid, $Codetype, $Code, $Modifier, $enc)
                         );
@@ -306,7 +307,7 @@ if ($_POST['form_save']) {
 
                         $resMoneyAdjusted = sqlStatement(
                             "SELECT sum(adj_amount) as MoneyAdjusted FROM ar_activity where " .
-                            "pid =? and code_type=? and code=? and modifier=? and encounter =?",
+                            "pid = ? and code_type = ? and code = ? and modifier = ? and encounter = ? AND deleted IS NULL",
                             array($form_pid, $Codetype, $Code, $Modifier, $enc)
                         );
                         $rowMoneyAdjusted = sqlFetchArray($resMoneyAdjusted);
@@ -345,7 +346,7 @@ if ($_POST['form_save']) {
                               sqlCommitTrans();
                         }//if
                     }//while
-                    if ($amount!=0) {//if any excess is there.
+                    if ($amount != 0) {//if any excess is there.
                               sqlBeginTrans();
                                 $sequence_no = sqlQuery("SELECT IFNULL(MAX(sequence_no),0) + 1 AS increment FROM ar_activity WHERE pid = ? AND encounter = ?", array($form_pid, $enc));
                                 sqlStatement(
@@ -417,12 +418,12 @@ if ($_POST['form_save'] || $_REQUEST['receipt']) {
     ?>
 
 <title><?php echo xlt('Receipt for Payment'); ?></title>
-    <?php Header::setupHeader(['jquery-ui']); ?>
-<script language="JavaScript">
+    <?php Header::setupHeader(); ?>
+<script>
 
     <?php require($GLOBALS['srcdir'] . "/restoreSession.php"); ?>
 
-$(function() {
+$(function () {
     var win = top.printLogSetup ? top : opener.top;
     win.printLogSetup(document.getElementById('printbutton'));
 });
@@ -471,16 +472,16 @@ function toencounter(enc, datestr, topframe) {
 }
 </script>
 </head>
-<body bgcolor='#ffffff'>
+<body bgcolor='var(--white)'>
     <center>
 
     <p><h2><?php echo xlt('Receipt for Payment'); ?></h2>
 
     <p><?php echo text($frow['name']) ?>
-    <br><?php echo text($frow['street']) ?>
-    <br><?php echo text($frow['city'] . ', ' . $frow['state']) . ' ' .
+    <br /><?php echo text($frow['street']) ?>
+    <br /><?php echo text($frow['city'] . ', ' . $frow['state']) . ' ' .
         text($frow['postal_code']) ?>
-    <br><?php echo text($frow['phone']) ?>
+    <br /><?php echo text($frow['phone']) ?>
 
     <p>
     <table border='0' cellspacing='8'>
@@ -508,7 +509,7 @@ function toencounter(enc, datestr, topframe) {
         <tr>
             <td>
             <?php
-            if ($_REQUEST['radio_type_of_payment']=='pre_payment') {
+            if ($_REQUEST['radio_type_of_payment'] == 'pre_payment') {
                 echo xlt('Pre-payment Amount');
             } else {
                 echo xlt('Amount for Past Balance');
@@ -536,7 +537,8 @@ function toencounter(enc, datestr, topframe) {
         }
         ?>
 
-        <?php if (acl_check('admin', 'super')) { ?>
+        <?php if (AclMain::aclCheckCore('admin', 'super') || AclMain::aclCheckCore('acct', 'bill')) {
+            // allowing biller to delete payments ?>
         &nbsp;
         <input type='button' value='<?php echo xla('Delete'); ?>' style='color:red' onclick='deleteme()' />
         <?php } ?>
@@ -559,10 +561,10 @@ function toencounter(enc, datestr, topframe) {
     ?>
 <title><?php echo xlt('Record Payment'); ?></title>
 
-<style type="text/css">
+<style>
  body    { font-family:sans-serif; font-size:10pt; font-weight:normal }
- .dehead { color:#000000; font-family:sans-serif; font-size:10pt; font-weight:bold }
- .detail { color:#000000; font-family:sans-serif; font-size:10pt; font-weight:normal }
+ .dehead { color:var(--black); font-family:sans-serif; font-size:10pt; font-weight:bold }
+ .detail { color:var(--black); font-family:sans-serif; font-size:10pt; font-weight:normal }
 #ajax_div_patient {
     position: absolute;
     z-index:10;
@@ -576,17 +578,17 @@ function toencounter(enc, datestr, topframe) {
 
 
 <!-- supporting javascript code -->
-<script language='JavaScript'>
+<script>
     var mypcc = '1';
 </script>
     <?php include_once("{$GLOBALS['srcdir']}/ajax/payment_ajax_jav.inc.php"); ?>
-<script language="javascript" type="text/javascript">
+<script>
     document.onclick=HideTheAjaxDivs;
 </script>
 
-<script type="text/javascript" src="../../library/topdialog.js"></script>
+    <?php Header::setupAssets('topdialog'); ?>
 
-<script language="JavaScript">
+<script>
     <?php require($GLOBALS['srcdir'] . "/restoreSession.php"); ?>
 function closeHow(e) {
     if (opener) {
@@ -625,10 +627,10 @@ function coloring() {
                     document.getElementById('paying_' + i).style.background = '#99CC00';
                 }
                 else if (paying == patient_balance) {
-                    document.getElementById('paying_' + i).style.background = '#ffffff';
+                    document.getElementById('paying_' + i).style.background = 'var(--white)';
                 }
             } else {
-                document.getElementById('paying_' + i).style.background = '#ffffff';
+                document.getElementById('paying_' + i).style.background = 'var(--white)';
             }
         }
         else {
@@ -945,51 +947,49 @@ function make_insurance() {
     <div class="container"><!--begin container div for form-->
         <div class="row">
             <div class="col-sm-12">
-                <div class="page-header">
-                    <?php echo  $oemr_ui->pageHeading() . "\r\n"; ?>
-                </div>
+                <?php echo  $oemr_ui->pageHeading() . "\r\n"; ?>
             </div>
         </div>
         <div class="row">
             <div class="col-sm-12">
-                <form method='post' action='front_payment.php<?php echo ($payid) ? "?payid=".attr_url($payid) : ""; ?>' onsubmit='return validate();'>
+                <form method='post' action='front_payment.php<?php echo ($payid) ? "?payid=" . attr_url($payid) : ""; ?>' onsubmit='return validate();'>
                    <input type="hidden" name="csrf_token_form" value="<?php echo attr(CsrfUtils::collectCsrfToken()); ?>" />
                    <input name='form_pid' type='hidden' value='<?php echo attr($pid) ?>'>
                     <fieldset>
                     <legend><?php echo xlt('Payment'); ?></legend>
-                        <div class="col-xs-12 oe-custom-line">
-                            <div class="col-xs-3 col-lg-offset-3">
+                        <div class="col-12 oe-custom-line">
+                            <div class="col-3 offset-lg-3">
                                 <label class="control-label" for="form_method"><?php echo xlt('Payment Method'); ?>:</label>
                             </div>
-                            <div class="col-xs-3">
+                            <div class="col-3">
                                 <select class="form-control" id="form_method" name="form_method" onchange='CheckVisible("yes")'>
                                     <?php
                                     $query1112 = "SELECT * FROM list_options where list_id=?  ORDER BY seq, title ";
                                     $bres1112 = sqlStatement($query1112, array('payment_method'));
                                     while ($brow1112 = sqlFetchArray($bres1112)) {
-                                        if ($brow1112['option_id']=='electronic' || $brow1112['option_id']=='bank_draft') {
+                                        if ($brow1112['option_id'] == 'electronic' || $brow1112['option_id'] == 'bank_draft') {
                                             continue;
                                         }
-                                        echo "<option value='".attr($brow1112['option_id'])."'>".text(xl_list_label($brow1112['title']))."</option>";
+                                        echo "<option value='" . attr($brow1112['option_id']) . "'>" . text(xl_list_label($brow1112['title'])) . "</option>";
                                     }
                                     ?>
                                 </select>
                             </div>
                         </div>
-                        <div class="col-xs-12 oe-custom-line">
-                            <div class="col-xs-3 col-lg-offset-3">
+                        <div class="col-12 oe-custom-line">
+                            <div class="col-3 offset-lg-3">
                                 <label class="control-label" for="check_number"><?php echo xlt('Check/Ref Number'); ?>:</label>
                             </div>
-                            <div class="col-xs-3">
+                            <div class="col-3">
                                 <div id="ajax_div_patient" style="display:none;"></div>
                                 <input type='text'  id="check_number" name='form_source' class= 'form-control' value='<?php echo attr($payrow['source']); ?>'>
                             </div>
                         </div>
-                        <div class="col-xs-12 oe-custom-line">
-                            <div class="col-xs-3 col-lg-offset-3">
+                        <div class="col-12 oe-custom-line">
+                            <div class="col-3 offset-lg-3">
                                 <label class="control-label" for="form_discount"><?php echo xla('Patient Coverage'); ?>:</label>
                             </div>
-                            <div class="col-xs-6">
+                            <div class="col-6">
                                 <div style="padding-left:15px">
                                     <label class="radio-inline">
                                       <input id="radio_type_of_coverage1" name="radio_type_of_coverage" onclick="make_visible_radio();make_self();" type="radio" value="self"><?php echo xlt('Self'); ?>
@@ -1000,11 +1000,11 @@ function make_insurance() {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xs-12 oe-custom-line">
-                            <div class="col-xs-3 col-lg-offset-3">
+                        <div class="col-12 oe-custom-line">
+                            <div class="col-3 offset-lg-3">
                                 <label class="control-label" for=""><?php echo xlt('Payment against'); ?>:</label>
                             </div>
-                            <div class="col-xs-6">
+                            <div class="col-6">
                                 <div id="tr_radio1" style="padding-left:15px; display:none"><!-- For radio Insurance -->
                                     <label class="radio-inline">
                                       <input id="radio_type_of_payment_self1" name="radio_type_of_payment" onclick="make_visible_row();make_it_hide_enc_pay();cursor_pointer();" type="radio" value="cash"><?php echo xlt('Encounter Payment'); ?>
@@ -1015,7 +1015,7 @@ function make_insurance() {
                                       <input checked="checked" id="radio_type_of_payment1" name="radio_type_of_payment" onclick="make_visible_row();cursor_pointer();" type="radio" value="copay"><?php echo xlt('Co Pay'); ?>
                                     </label>
                                     <label class="radio-inline">
-                                      <input id="radio_type_of_payment2" name="radio_type_of_payment" onclick="make_visible_row();" type="radio" value="invoice_balance"><?php echo xlt('Invoice Balance'); ?><br>
+                                      <input id="radio_type_of_payment2" name="radio_type_of_payment" onclick="make_visible_row();" type="radio" value="invoice_balance"><?php echo xlt('Invoice Balance'); ?><br />
                                     </label>
                                     <label class="radio-inline">
                                       <input id="radio_type_of_payment4" name="radio_type_of_payment" onclick="make_hide_row();" type="radio" value="pre_payment"><?php echo xlt('Pre Pay'); ?>
@@ -1023,12 +1023,12 @@ function make_insurance() {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xs-12 oe-custom-line">
+                        <div class="col-12 oe-custom-line">
                             <div id="table_display_prepayment" style="display:none">
-                                <div class="col-xs-3 col-lg-offset-3">
+                                <div class="col-3 offset-lg-3">
                                     <label class="control-label" for="form_prepayment"><?php echo xlt('Pre Payment'); ?>:</label>
                                 </div>
-                                <div class="col-xs-3">
+                                <div class="col-3">
                                     <input name='form_prepayment' id='form_prepayment'class='form-control' type='text' value =''>
                                 </div>
                             </div>
@@ -1062,7 +1062,7 @@ function make_insurance() {
                                 $query = "SELECT fe.encounter, b.code_type, b.code, b.modifier, b.fee, " .
                                 "LEFT(fe.date, 10) AS encdate ,fe.last_level_closed " .
                                 "FROM  form_encounter AS fe left join billing AS b  on " .
-                                "b.pid = ? AND b.activity = 1  AND " .//AND b.billed = 0
+                                "b.pid = ? AND b.activity = 1  AND " . //AND b.billed = 0
                                 "b.code_type != 'TAX' AND b.fee != 0 " .
                                 "AND fe.pid = b.pid AND fe.encounter = b.encounter " .
                                 "where fe.pid = ? " .
@@ -1108,7 +1108,7 @@ function make_insurance() {
                                 $query = "SELECT fe.encounter, s.drug_id, s.fee, " .
                                 "LEFT(fe.date, 10) AS encdate,fe.last_level_closed " .
                                 "FROM form_encounter AS fe left join drug_sales AS s " .
-                                "on s.pid = ? AND s.fee != 0 " .//AND s.billed = 0
+                                "on s.pid = ? AND s.fee != 0 " . //AND s.billed = 0
                                 "AND fe.pid = s.pid AND fe.encounter = s.encounter " .
                                 "where fe.pid = ? " .
                                 "ORDER BY s.encounter";
@@ -1167,7 +1167,7 @@ function make_insurance() {
                                     $drow = sqlQuery(
                                         "SELECT  SUM(pay_amount) AS payments, " .
                                         "SUM(adj_amount) AS adjustments  FROM ar_activity WHERE " .
-                                        "pid = ? and encounter = ? and " .
+                                        "deleted IS NULL AND pid = ? and encounter = ? and " .
                                         "payer_type != 0 and account_code!='PCP' ",
                                         array($pid, $enc)
                                     );
@@ -1178,7 +1178,7 @@ function make_insurance() {
                                     $drow = sqlQuery(
                                         "SELECT  SUM(pay_amount) AS payments, " .
                                         "SUM(adj_amount) AS adjustments  FROM ar_activity WHERE " .
-                                        "pid = ? and encounter = ? and " .
+                                        "deleted IS NULL AND pid = ? and encounter = ? and " .
                                         "payer_type = 0 and account_code!='PCP' ",
                                         array($pid, $enc)
                                     );
@@ -1199,7 +1199,7 @@ function make_insurance() {
                                             "pid = ? and encounter = ? ", array($pid, $enc));
                                         $drow = sqlQuery("SELECT SUM(pay_amount) AS payments, " .
                                             "SUM(adj_amount) AS adjustments FROM ar_activity WHERE " .
-                                            "pid = ? and encounter = ? ", array($pid, $enc));
+                                            "deleted IS NULL AND pid = ? and encounter = ? ", array($pid, $enc));
                                         $duept = $brow['amount'] + $srow['amount'] - $drow['payments'] - $drow['adjustments'];
                                     }
 
@@ -1237,9 +1237,9 @@ function make_insurance() {
                     </fieldset>
                     <div class="form-group">
                         <div class="col-sm-12 text-left position-override">
-                            <div class="btn-group btn-group-pinch" role="group">
-                                <button type='submit' class="btn btn-default btn-save" name='form_save' value='<?php echo xla('Generate Invoice');?>'><?php echo xlt('Generate Invoice');?></button>
-                                <button type='button' class="btn btn-link btn-cancel btn-separate-left"  value='<?php echo xla('Cancel'); ?>' onclick='closeHow(event)'><?php echo xlt('Cancel'); ?></button>
+                            <div class="btn-group" role="group">
+                                <button type='submit' class="btn btn-secondary btn-save" name='form_save' value='<?php echo xla('Generate Invoice');?>'><?php echo xlt('Generate Invoice');?></button>
+                                <button type='button' class="btn btn-link btn-cancel"  value='<?php echo xla('Cancel'); ?>' onclick='closeHow(event)'><?php echo xlt('Cancel'); ?></button>
                                 <input type="hidden" name="hidden_patient_code" id="hidden_patient_code" value="<?php echo attr($pid);?>"/>
                                 <input type='hidden' name='ajax_mode' id='ajax_mode' value='' />
                                 <input type='hidden' name='mode' id='mode' value='' />
@@ -1249,7 +1249,7 @@ function make_insurance() {
                 </form>
             </div>
         </div>
-        <script language="JavaScript">
+        <script>
         calctotal();
         </script>
     </div><!--end of container div of accept payment i.e the form-->

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This singleton class provides a pooled Doctrine connection to consumers. All connection data
  * is configurable via sqlconf.php.
@@ -39,8 +40,8 @@
 
 namespace OpenEMR\Common\Database;
 
-use \Doctrine\ORM\Tools\Setup;
-use \Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Tools\Setup;
+use Doctrine\ORM\EntityManager;
 use OpenEMR\Common\Database\Auditor;
 use OpenEMR\Common\Logging\Logger;
 
@@ -87,11 +88,9 @@ final class Connector
     }
 
     /**
-     * Creates the pooled Doctrine connection. All connection data is configurable via sqlconf.php.
-     * By default, the connection is pooled, in a nondev mode, and uses the pdo_mysql driver. Note
-     * that $GLOBALS["doctrine_connection_pooling"] and $GLOBALS["doctrine_dev_mode"] are used instead
-     * of $sqlconf[] because editing the sqlconf.php is not allowed (will mess up endusers trying to
-     * upgrade their install).
+     * Creates the Doctrine connection. All connection data is configurable via sqlconf.php.
+     * Pooling os controlled by $GLOBALS["enable_database_connection_pooling"] set in Globals at
+     * 'Enable Database Connection Pooling' setting.
      *
      * @todo document throwables
      */
@@ -100,7 +99,13 @@ final class Connector
         global $sqlconf;
         $entityPath = array(__DIR__ . "../entities");
 
-        $this->logger->trace("Connecting with " . ($GLOBALS["doctrine_connection_pooling"] ? "pooled" : "non-pooled") . " mode");
+        if ($GLOBALS["enable_database_connection_pooling"] && ($GLOBALS['connection_pooling_off'] !== true)) {
+            $doctrinePooling = true;
+        } else {
+            $doctrinePooling = false;
+        }
+
+        $this->logger->trace("Connecting with " . ($doctrinePooling ? "pooled" : "non-pooled") . " mode");
         $connection = array(
             'driver'   => "pdo_mysql",
             'host'     => $sqlconf["host"],
@@ -108,7 +113,7 @@ final class Connector
             'user'     => $sqlconf["login"],
             'password' => $sqlconf["pass"],
             'dbname'   => $sqlconf["dbase"],
-            'pooled'   => $GLOBALS["doctrine_connection_pooling"]
+            'pooled'   => $doctrinePooling
         );
 
         global $disable_utf8_flag;
@@ -116,9 +121,15 @@ final class Connector
         $driverOptionsString = '';
 
         if (!$disable_utf8_flag) {
-            $this->logger->trace("Enabling utf8");
-            $connection['charset'] = 'utf8';
-            $driverOptionsString = 'SET NAMES utf8';
+            if ($sqlconf['db_encoding'] == "utf8mb4") {
+                $this->logger->trace("Enabling utf8mb4");
+                $connection['charset'] = 'utf8mb4';
+                $driverOptionsString = 'SET NAMES utf8mb4';
+            } else {
+                $this->logger->trace("Enabling utf8");
+                $connection['charset'] = 'utf8';
+                $driverOptionsString = 'SET NAMES utf8';
+            }
         }
 
         $this->logger->trace("Clearing sql mode");
@@ -143,8 +154,10 @@ final class Connector
         // Can also support client based certificate if also include mysql-cert and mysql-key (this is optional for ssl)
         if (file_exists($GLOBALS['OE_SITE_DIR'] . "/documents/certificates/mysql-ca")) {
             $connection['driverOptions'][\PDO::MYSQL_ATTR_SSL_CA ] = $GLOBALS['OE_SITE_DIR'] . "/documents/certificates/mysql-ca";
-            if (file_exists($GLOBALS['OE_SITE_DIR'] . "/documents/certificates/mysql-key") &&
-                file_exists($GLOBALS['OE_SITE_DIR'] . "/documents/certificates/mysql-cert")) {
+            if (
+                file_exists($GLOBALS['OE_SITE_DIR'] . "/documents/certificates/mysql-key") &&
+                file_exists($GLOBALS['OE_SITE_DIR'] . "/documents/certificates/mysql-cert")
+            ) {
                 $connection['driverOptions'][\PDO::MYSQL_ATTR_SSL_KEY] = $GLOBALS['OE_SITE_DIR'] . "/documents/certificates/mysql-key";
                 $connection['driverOptions'][\PDO::MYSQL_ATTR_SSL_CERT] = $GLOBALS['OE_SITE_DIR'] . "/documents/certificates/mysql-cert";
             }

@@ -1,18 +1,14 @@
 <?php
 //First make sure user has access
 require_once("../../interface/globals.php");
-require_once("$srcdir/acl.inc");
+
+use OpenEMR\Common\Acl\AclMain;
+
 //ensure user has proper access
-if (!acl_check('admin', 'acl')) {
+if (!AclMain::aclCheckCore('admin', 'acl')) {
             echo xlt('ACL Administration Not Authorized');
             exit;
 }
-//ensure php is installed
-if (!isset($phpgacl_location)) {
-            echo xlt('php-GACL access controls are turned off');
-            exit;
-}
-
 
 require_once('gacl_admin.inc.php');
 
@@ -43,7 +39,7 @@ switch ($_POST['action']) {
 		//See edit_group.php
 		break;
 	default:
-		$formatted_groups = $gacl_api->format_groups($gacl_api->sort_groups($group_type), HTML);
+		$formatted_groups = $gacl_api->format_groups($gacl_api->sort_groups($group_type), 'HTML');
 
 		$query = '
 			SELECT		a.id, a.name, a.value, count(b.'. $group_type .'_id)

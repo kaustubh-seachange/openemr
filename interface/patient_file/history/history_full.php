@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Patient history form.
  *
@@ -9,15 +10,14 @@
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-
 require_once("../../globals.php");
 require_once("$srcdir/patient.inc");
 require_once("history.inc.php");
-require_once("$srcdir/acl.inc");
 require_once("$srcdir/options.inc.php");
 require_once("$srcdir/options.js.php");
 require_once("$srcdir/validation/LBF_Validation.php");
 
+use OpenEMR\Common\Acl\AclMain;
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Core\Header;
 use OpenEMR\OeUI\OemrUI;
@@ -25,24 +25,24 @@ use OpenEMR\OeUI\OemrUI;
 $CPR = 4; // cells per row
 
 // Check authorization.
-if (acl_check('patients', 'med')) {
+if (AclMain::aclCheckCore('patients', 'med')) {
     $tmp = getPatientData($pid, "squad");
-    if ($tmp['squad'] && ! acl_check('squads', $tmp['squad'])) {
+    if ($tmp['squad'] && ! AclMain::aclCheckCore('squads', $tmp['squad'])) {
         die(xlt("Not authorized for this squad."));
     }
 }
 
-if (!acl_check('patients', 'med', '', array('write','addonly'))) {
+if (!AclMain::aclCheckCore('patients', 'med', '', array('write','addonly'))) {
     die(xlt("Not authorized"));
 }
 ?>
 <html>
 <head>
-    <?php Header::setupHeader(['datetime-picker', 'common']); ?>
+    <?php Header::setupHeader(['datetime-picker', 'common', 'select2']); ?>
 <title><?php echo xlt("History & Lifestyle");?></title>
 <?php include_once("{$GLOBALS['srcdir']}/options.js.php"); ?>
 
-<script LANGUAGE="JavaScript">
+<script>
  //Added on 5-jun-2k14 (regarding 'Smoking Status - display SNOMED code description')
  var code_options_js = Array();
 
@@ -50,7 +50,7 @@ if (!acl_check('patients', 'med', '', array('write','addonly'))) {
     $smoke_codes = getSmokeCodes();
 
     foreach ($smoke_codes as $val => $code) {
-            echo "code_options_js"."[" . js_escape($val) . "]=" . js_escape($code) . ";\n";
+            echo "code_options_js" . "[" . js_escape($val) . "]=" . js_escape($code) . ";\n";
     }
     ?>
 
@@ -170,15 +170,25 @@ function sel_related(e) {
 
 </script>
 
-<script type="text/javascript">
+<script>
 /// todo, move this to a common library
-$(function(){
+$(function () {
     if($("#form_tobacco").val()!=""){
         if(code_options_js[$("#form_tobacco").val()]!=""){
             $("#smoke_code").html(" ( "+code_options_js[$("#form_tobacco").val()]+" )");
         }
     }
     tabbify();
+
+    $(".select-dropdown").select2({
+        theme: "bootstrap4",
+        <?php require($GLOBALS['srcdir'] . '/js/xl/select2.js.php'); ?>
+    });
+    if (typeof error !== 'undefined') {
+        if (error) {
+            alertMsg(error);
+        }
+    }
 
     $('.datepicker').datetimepicker({
         <?php $datetimepicker_timepicker = false; ?>
@@ -201,7 +211,7 @@ $(function(){
 });
 </script>
 
-<style type="text/css">
+<style>
 .form-control {
     width: auto;
     display: inline;
@@ -227,16 +237,16 @@ $arrOeUiSettings = array(
 $oemr_ui = new OemrUI($arrOeUiSettings);
 ?>
 </head>
-<body class="body_top">
+<body>
 
-<div id="container_div" class="<?php echo $oemr_ui->oeContainer();?>">
+<div id="container_div" class="<?php echo $oemr_ui->oeContainer();?> mt-3">
     <div class="row">
-        <div class="col-sm-12">
+        <div class="col-12">
             <?php require_once("$include_root/patient_file/summary/dashboard_header.php"); ?>
         </div>
     </div>
     <div class="row">
-        <div class="col-xs-12">
+        <div class="col-12">
             <?php
             $result = getHistoryData($pid);
             if (!is_array($result)) {
@@ -252,12 +262,11 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
 
             <form action="history_save.php" id="HIS" name='history_form' method='post' onsubmit="submitme(<?php echo $GLOBALS['new_validate'] ? 1 : 0;?>,event,'HIS',constraints)">
                 <input type="hidden" name="csrf_token_form" value="<?php echo attr(CsrfUtils::collectCsrfToken()); ?>" />
-
-                <input type='hidden' name='mode' value='save'>
+                <input type='hidden' name='mode' value='save' />
 
                 <div class="btn-group">
-                    <button type="submit" class="btn btn-default btn-save"><?php echo xlt('Save'); ?></button>
-                    <a href="history.php" class="btn btn-link btn-cancel" onclick="top.restoreSession()">
+                    <button type="submit" class="btn btn-primary btn-save"><?php echo xlt('Save'); ?></button>
+                    <a href="history.php" class="btn btn-secondary btn-cancel" onclick="top.restoreSession()">
                         <?php echo xlt('Cancel'); ?>
                     </a>
                 </div>
@@ -265,7 +274,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                 <br/>
 
                 <!-- history tabs -->
-                <div id="HIS" style='float:none; margin-top: 10px; margin-right:20px'>
+                <div id="HIS" class="float-none mt-3">
                     <ul class="tabNav" >
                         <?php display_layout_tabs('HIS', $result, $result2); ?>
                     </ul>
@@ -277,14 +286,14 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
             </form>
 
             <!-- include support for the list-add selectbox feature -->
-            <?php include $GLOBALS['fileroot']."/library/options_listadd.inc"; ?>
+            <?php include $GLOBALS['fileroot'] . "/library/options_listadd.inc"; ?>
         </div>
     </div>
 </div><!--end of container div-->
 <?php $oemr_ui->oeBelowContainerDiv();?>
 </body>
 
-<script language="JavaScript">
+<script>
 
 // Array of skip conditions for the checkSkipConditions() function.
 var skipArray = [
@@ -295,7 +304,7 @@ var skipArray = [
 
 </script>
 
-<script language='JavaScript'>
+<script>
     // Array of skip conditions for the checkSkipConditions() function.
     var skipArray = [
         <?php echo $condition_str; ?>
@@ -310,9 +319,9 @@ var skipArray = [
 </script>
 
 <?php /*Include the validation script and rules for this form*/
-$form_id="HIS";
+$form_id = "HIS";
 //LBF forms use the new validation depending on the global value
-$use_validate_js=$GLOBALS['new_validate'];
+$use_validate_js = $GLOBALS['new_validate'];
 
 ?><?php include_once("$srcdir/validation/validation_script.js.php");?>
 

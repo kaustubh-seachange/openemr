@@ -1,23 +1,24 @@
 <?php
+
 /**
  * OnsiteActivityViewListView.tpl.php
  *
  * @package   OpenEMR
  * @link      https://www.open-emr.org
  * @author    Jerry Padgett <sjpadgett@gmail.com>
- * @copyright Copyright (c) 2016-2017 Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2016-2020 Jerry Padgett <sjpadgett@gmail.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-    $this->assign('title', xlt('Patient Portal') . ' | ' . xlt('Onsite Activity Views'));
+    $this->assign('title', xlt('Portal') . ' | ' . xlt('Activity'));
     $this->assign('nav', 'onsiteactivityviews');
 
     $this->display('_FormsHeader.tpl.php');
     echo "<script>var cuser='" . $this->cuser . "';</script>";
 ?>
-<script type="text/javascript">
+<script>
     $LAB.script("<?php echo $GLOBALS['web_root']; ?>/portal/patient/scripts/app/onsiteactivityviews.js?v=<?php echo $GLOBALS['v_js_includes']; ?>").wait(function(){
-        $(function(){
+        $(function () {
             actpage.init();
         });
         setTimeout(function(){
@@ -26,17 +27,17 @@
     });
 </script>
 
-<div class="container">
+<div class="container mt-5">
 
 <h3>
     <i class="icon-th-list"></i><?php echo xlt('Onsite Patient Activities')?>
     <span id="loader" class="loader progress progress-striped active"><span class="progress-bar"></span></span>
-    <div class="col-sm-3 col-md-3 pull-right">
+    <div class="col-sm-3 col-md-3 float-right">
         <form class="navbar-form" role="search">
         <div class="input-group">
-            <input type="text" class="form-control" placeholder="<?php echo xla('Search'); ?>" name="srch-term" id="srch-term">
-            <div class="input-group-btn">
-                <button class="btn btn-default" type="submit"><i class="glyphicon glyphicon-search"></i></button>
+            <input type="text" class="form-control" placeholder="<?php echo xla('Search'); ?>" name="srch-term" id="srch-term" />
+            <div class="input-group-append">
+                <button class="btn btn-secondary" type="submit"><i class="fas fa-search"></i></button>
             </div>
         </div>
         </form>
@@ -44,7 +45,7 @@
 </h3>
     <!-- underscore template for the collection -->
     <script type="text/template" id="onsiteActivityViewCollectionTemplate">
-        <table class="collection table table-condensed table-bordered table-hover">
+        <table class="collection table table-sm table-bordered table-hover">
         <thead>
             <tr>
                 <th id="header_Date"><?php echo xlt('Date')?><% if (actpage.orderBy == 'Date') { %> <i class='icon-arrow-<%= actpage.orderDesc ? 'up' : 'down' %>' /><% } %></th>

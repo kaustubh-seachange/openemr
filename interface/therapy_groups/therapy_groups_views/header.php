@@ -1,4 +1,5 @@
 <?php
+
 /**
  * interface/therapy_groups/therapy_groups_views/header.php contains header for all therapy group views.
  *
@@ -15,17 +16,14 @@
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-
 use OpenEMR\Core\Header;
 
 ?>
 <!doctype html>
 
-<html lang="">
+<html>
 <head>
-    <meta charset="utf-8">
-
-    <?php Header::setupHeader(['datetime-picker', 'topdialog', 'moment', 'datatables', 'datatables-jqui-theme', 'jquery-ui', 'jquery-ui-theme']); ?>
+    <?php Header::setupHeader(['datetime-picker', 'topdialog', 'moment', 'datatables', 'datatables-dt', 'datatables-bs']); ?>
 
     <script>
         <?php require $GLOBALS['srcdir'] . "/formatting_DateToYYYYMMDD_js.js.php" ?>
@@ -33,5 +31,3 @@ use OpenEMR\Core\Header;
 </head>
 
 <body class="body_top therapy_group">
-
-

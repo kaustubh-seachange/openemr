@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Report columns:
  * Product Name (blank where repeated)
@@ -19,11 +20,10 @@
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-
 require_once("../globals.php");
 require_once("$srcdir/patient.inc");
-require_once("$srcdir/acl.inc");
 
+use OpenEMR\Common\Acl\AclMain;
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Core\Header;
 
@@ -207,10 +207,14 @@ function thisLineItem(
     }
 
     // If first column is changing, time for its totals.
-    if (($product_first && $product_id != $last_product_id) ||
-      (!$product_first && $warehouse_id != $last_warehouse_id)) {
-        if (($product_first && $last_product_id) ||
-        (!$product_first && $last_warehouse_id != '~')) {
+    if (
+        ($product_first && $product_id != $last_product_id) ||
+        (!$product_first && $warehouse_id != $last_warehouse_id)
+    ) {
+        if (
+            ($product_first && $last_product_id) ||
+            (!$product_first && $last_warehouse_id != '~')
+        ) {
             $priei = $product_first ? getEndInventory($last_product_id) :
               getEndInventory(0, $last_warehouse_id);
             // Print first column total.
@@ -340,7 +344,7 @@ function thisLineItem(
     }
 } // end function
 
-if (! acl_check('acct', 'rep')) {
+if (! AclMain::aclCheckCore('acct', 'rep')) {
     die(xlt("Unauthorized access."));
 }
 
@@ -392,7 +396,7 @@ if ($form_action == 'export') {
 
     <?php Header::setupHeader(['datetime-picker', 'report-helper']); ?>
 
-<style type="text/css">
+<style>
  /* specifically include & exclude from printing */
  @media print {
   #report_parameters {visibility: hidden; display: none;}
@@ -404,8 +408,8 @@ if ($form_action == 'export') {
   #report_parameters_daterange {visibility: hidden; display: none;}
  }
  body       { font-family:sans-serif; font-size:10pt; font-weight:normal }
- .dehead    { color:#000000; font-family:sans-serif; font-size:10pt; font-weight:bold }
- .detail    { color:#000000; font-family:sans-serif; font-size:10pt; font-weight:normal }
+ .dehead    { color:var(--black); font-family:sans-serif; font-size:10pt; font-weight:bold }
+ .detail    { color:var(--black); font-family:sans-serif; font-size:10pt; font-weight:normal }
 
 table.mymaintable, table.mymaintable td, table.mymaintable th {
  border: 1px solid #aaaaaa;
@@ -416,9 +420,9 @@ table.mymaintable td, table.mymaintable th {
 }
 </style>
 
-<script language='JavaScript'>
+<script>
 
-    $(function() {
+    $(function () {
         oeFixedHeaderSetup(document.getElementById('mymaintable'));
         var win = top.printLogSetup ? top : opener.top;
         win.printLogSetup(document.getElementById('printbutton'));
@@ -519,17 +523,17 @@ table.mymaintable td, table.mymaintable th {
    </table>
   </td>
   <td align='left' valign='middle'>
-   <table style='border-left:1px solid; width:100%; height:100%'>
+   <table class='w-100 h-100' style='border-left:1px solid;'>
     <tr>
      <td valign='middle'>
-      <a href='#' class='css_button' onclick='mysubmit("submit")' style='margin-left:1em'>
+      <a href='#' class='btn btn-primary' onclick='mysubmit("submit")' style='margin-left:1em'>
        <span><?php echo xlt('Submit'); ?></span>
       </a>
     <?php if ($form_action) { ?>
-      <a href='#' class='css_button' id='printbutton' style='margin-left:1em'>
+      <a href='#' class='btn btn-primary' id='printbutton' style='margin-left:1em'>
        <span><?php echo xlt('Print'); ?></span>
       </a>
-      <a href='#' class='css_button' onclick='mysubmit("export")' style='margin-left:1em'>
+      <a href='#' class='btn btn-primary' onclick='mysubmit("export")' style='margin-left:1em'>
        <span><?php echo xlt('CSV Export'); ?></span>
       </a>
 <?php } ?>
@@ -644,8 +648,10 @@ if ($form_action) { // if submit or export
         // generate a pseudo-adjustment for that.
         if ($row['inventory_id'] != $last_inventory_id) {
             $last_inventory_id = $row['inventory_id'];
-            if (!empty($row['destroy_date']) && $row['on_hand'] != 0
-            && $row['destroy_date'] <= $form_to_date) {
+            if (
+                !empty($row['destroy_date']) && $row['on_hand'] != 0
+                && $row['destroy_date'] <= $form_to_date
+            ) {
                 thisLineItem(
                     $row['drug_id'],
                     $row['warehouse_id'],
@@ -669,11 +675,11 @@ if ($form_action) { // if submit or export
                 } else {
                     $qtys[3] = 0 - $row['quantity'];
                 }
-            } else if ($row['pid']) {
+            } elseif ($row['pid']) {
                 $qtys[0] = 0 - $row['quantity'];
-            } else if ($row['distributor_id']) {
+            } elseif ($row['distributor_id']) {
                 $qtys[1] = 0 - $row['quantity'];
-            } else if ($row['fee'] != 0) {
+            } elseif ($row['fee'] != 0) {
                 $qtys[2] = 0 - $row['quantity'];
             } else { // no pid, distributor, source lot or fee: must be an adjustment
                 $qtys[4] = 0 - $row['quantity'];

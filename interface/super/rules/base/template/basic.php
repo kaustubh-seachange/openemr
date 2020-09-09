@@ -1,4 +1,5 @@
 <?php
+
  // Copyright (C) 2010-2011 Aron Racho <aron@mi-squred.com>
  //
  // This program is free software; you can redistribute it and/or
@@ -11,9 +12,14 @@ use OpenEMR\Core\Header;
 ?>
 <html>
 <head>
+    <!-- TODO: FIX No Bootstrap header !-->
     <?php Header::setupHeader(['no_bootstrap', 'no_fontawesome', 'no_textformat', 'no_dialog']); ?>
 
-    <link rel="stylesheet" href="<?php css_src('rules.css') ?>" type="text/css">
+    <?php if ($_SESSION['language_direction'] == "rtl") { ?>
+      <link rel="stylesheet" href="<?php echo $GLOBALS['themes_static_relative']; ?>/misc/rtl_rules.css?v=<?php echo $GLOBALS['v_js_includes']; ?>" />
+    <?php } else { ?>
+      <link rel="stylesheet" href="<?php echo $GLOBALS['themes_static_relative']; ?>/misc/rules.css?v=<?php echo $GLOBALS['v_js_includes']; ?>" />
+    <?php } ?>
 </head>
 
 <body class='body_top'>

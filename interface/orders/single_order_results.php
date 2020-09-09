@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Script to display results for a given procedure order.
  *
@@ -11,15 +12,15 @@
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-
 require_once(dirname(__FILE__) . '/../globals.php');
 require_once($GLOBALS["include_root"] . "/orders/single_order_results.inc.php");
 
 use Mpdf\Mpdf;
+use OpenEMR\Common\Acl\AclMain;
 use OpenEMR\Core\Header;
 
 // Check authorization.
-$thisauth = acl_check('patients', 'med');
+$thisauth = AclMain::aclCheckCore('patients', 'med');
 if (!$thisauth) {
     die(xlt('Not authorized'));
 }
@@ -29,7 +30,7 @@ $orderid = intval($_GET['orderid']);
 $finals_only = empty($_POST['form_showall']);
 
 if (!empty($_POST['form_sign']) && !empty($_POST['form_sign_list'])) {
-    if (!acl_check('patients', 'sign')) {
+    if (!AclMain::aclCheckCore('patients', 'sign')) {
         die(xlt('Not authorized to sign results'));
     }
 
@@ -103,7 +104,7 @@ if (!empty($_POST['form_send_to_portal'])) {
 ?>
 <html>
 <head>
-    <?php Header::setupHeader(['jquery-ui']); ?>
+    <?php Header::setupHeader(); ?>
 <title><?php echo xlt('Order Results'); ?></title>
 <style>
 body {
@@ -113,8 +114,8 @@ body {
 }
 </style>
 
-<script type="text/javascript" src="../../library/topdialog.js"></script>
-<script language="JavaScript">
+<script src="../../library/topdialog.js"></script>
+<script>
 <?php require($GLOBALS['srcdir'] . "/restoreSession.php"); ?>
 </script>
 
@@ -125,7 +126,7 @@ if (empty($_POST['form_sign'])) {
     generate_order_report($orderid, true, true, $finals_only);
 } else {
     ?>
-<script language='JavaScript'>
+<script>
  if (opener.document.forms && opener.document.forms[0]) {
   // Opener should be list_reports.php. Make it refresh.
   var f = opener.document.forms[0];

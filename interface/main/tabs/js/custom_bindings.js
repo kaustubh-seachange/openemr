@@ -28,7 +28,7 @@ ko.bindingHandlers.location={
                 }
 
                 if ( cwDocument ) {
-                    $(cwDocument).ready(function () {
+                    $(function () {
                             var jqDocument = $(cwDocument);
                             var titleDocument = jqDocument.attr('title');
                             var titleText = "Unknown";
@@ -79,8 +79,7 @@ ko.bindingHandlers.location={
                         }
                     );
                 }
-            }
-            ,true
+            } ,true
         );
 
     },
@@ -89,7 +88,7 @@ ko.bindingHandlers.location={
         var tabData = ko.unwrap(valueAccessor());
         element.src=tabData.url();
     }
-}
+};
 
 ko.bindingHandlers.iframeName = {
     init: function(element,valueAccessor, allBindings,viewModel, bindingContext)
@@ -99,6 +98,4 @@ ko.bindingHandlers.iframeName = {
     {
         element.name=ko.unwrap(valueAccessor());
     }
-}
-
-
+};

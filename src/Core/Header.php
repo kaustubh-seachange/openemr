@@ -1,4 +1,5 @@
 <?php
+
 /**
  * OpenEMR <https://open-emr.org>.
  *
@@ -27,6 +28,7 @@ class Header
 {
     private static $scripts;
     private static $links;
+    private static $isHeader;
 
     /**
      * Setup various <head> elements.
@@ -68,13 +70,53 @@ class Header
      * bring in the requested assets from config.yaml
      *
      * @param array|string $assets Asset(s) to include
+     * @param boolean $echoOutput - if true then echo
+     *                              if false then return string
      * @throws ParseException If unable to parse the config file
      * @return string
      */
-    public static function setupHeader($assets = [])
+    public static function setupHeader($assets = [], $echoOutput = true)
     {
+        // Required tag
+        $output = "\n<meta charset=\"utf-8\" />\n";
+        // Makes only compatible with MS Edge
+        $output .= "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\" />\n";
+        // BS4 required tag
+        $output .= "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\" />\n";
+        // Favicon
+        $output .= "<link rel=\"shortcut icon\" href=\"" . $GLOBALS['images_static_relative'] . "/favicon.ico\" />\n";
+        $output .= self::setupAssets($assets, true, false);
+        if ($echoOutput) {
+            echo $output;
+        } else {
+            return $output;
+        }
+    }
+
+    /**
+     * Can call this function directly rather than using above setupHeader function
+     *  if do not want to include the autoloaded assets.
+     *
+     * @param array $assets Asset(s) to include
+     * @param boolean $headerMode - if true, then include autoloaded assets
+     *                              if false, then do not include autoloaded assets
+     * @param boolean $echoOutput - if true then echo
+     *                              if false then return string
+     */
+    public static function setupAssets($assets = [], $headerMode = false, $echoOutput = true)
+    {
+        if ($headerMode) {
+            self::$isHeader = true;
+        } else {
+            self::$isHeader = false;
+        }
+
         try {
-            echo self::includeAsset($assets);
+            if ($echoOutput) {
+                echo self::includeAsset($assets);
+            } else {
+                return self::includeAsset($assets);
+            }
         } catch (\InvalidArgumentException $e) {
             error_log(errorLogEscape($e->getMessage()));
         }
@@ -129,12 +171,12 @@ class Header
     {
         foreach ($map as $k => $opts) {
             $autoload = (isset($opts['autoload'])) ? $opts['autoload'] : false;
-            $allowNoLoad= (isset($opts['allowNoLoad'])) ? $opts['allowNoLoad'] : false;
+            $allowNoLoad = (isset($opts['allowNoLoad'])) ? $opts['allowNoLoad'] : false;
             $alreadyBuilt = (isset($opts['alreadyBuilt'])) ? $opts['alreadyBuilt'] : false;
             $loadInFile = (isset($opts['loadInFile'])) ? $opts['loadInFile'] : false;
             $rtl = (isset($opts['rtl'])) ? $opts['rtl'] : false;
 
-            if ($autoload === true || in_array($k, $selectedAssets) || ($loadInFile && $loadInFile === self::getCurrentFile())) {
+            if ((self::$isHeader === true && $autoload === true) || in_array($k, $selectedAssets) || ($loadInFile && $loadInFile === self::getCurrentFile())) {
                 if ($allowNoLoad === true) {
                     if (in_array("no_" . $k, $selectedAssets)) {
                         continue;
@@ -147,11 +189,16 @@ class Header
                     self::$scripts[] = $s;
                 }
 
-                foreach ($tmp['links'] as $l) {
-                    self::$links[] = $l;
+                if (($k == "bootstrap") && ((!in_array("no_main-theme", $selectedAssets)) || (in_array("patientportal-style", $selectedAssets)))) {
+                    // Above comparison is to skip bootstrap theme loading when using a main theme or using the patient portal theme
+                    //  since bootstrap theme is already including in main themes and portal theme via SASS.
+                } else {
+                    foreach ($tmp['links'] as $l) {
+                        self::$links[] = $l;
+                    }
                 }
 
-                if ($rtl && $_SESSION['language_direction'] == 'rtl') {
+                if ($rtl && !empty($_SESSION['language_direction']) && $_SESSION['language_direction'] == 'rtl') {
                     $tmpRtl = self::buildAsset($rtl, $alreadyBuilt);
                     foreach ($tmpRtl['scripts'] as $s) {
                         self::$scripts[] = $s;
@@ -183,13 +230,23 @@ class Header
         $links = [];
 
         if ($script) {
-            $script = self::parsePlaceholders($script);
-            if ($alreadyBuilt) {
-                $path = $script;
-            } else {
-                $path = self::createFullPath($basePath, $script);
+            if (!is_string($script) && !is_array($script)) {
+                throw new \InvalidArgumentException("Script must be of type string or array");
             }
-            $scripts[] = self::createElement($path, 'script', $alreadyBuilt);
+
+            if (is_string($script)) {
+                $script = [$script];
+            }
+
+            foreach ($script as $k) {
+                $k = self::parsePlaceholders($k);
+                if ($alreadyBuilt) {
+                    $path = $k;
+                } else {
+                    $path = self::createFullPath($basePath, $k);
+                }
+                $scripts[] = self::createElement($path, 'script', $alreadyBuilt);
+            }
         }
 
         if ($link) {
@@ -204,7 +261,11 @@ class Header
             foreach ($link as $l) {
                 $l = self::parsePlaceholders($l);
                 if ($alreadyBuilt) {
-                    $path = $l;
+                    if ($GLOBALS['enable_compact_mode'] && strpos($l, "style_")) {
+                        $path = str_replace("style_", "compact_style_", $l);
+                    } else {
+                        $path = $l;
+                    }
                 } else {
                     $path = self::createFullPath($basePath, $l);
                 }
@@ -250,8 +311,8 @@ class Header
     private static function createElement($path, $type, $alreadyBuilt)
     {
 
-        $script = "<script type=\"text/javascript\" src=\"%path%\"></script>\n";
-        $link = "<link rel=\"stylesheet\" href=\"%path%\" type=\"text/css\">\n";
+        $script = "<script src=\"%path%\"></script>\n";
+        $link = "<link rel=\"stylesheet\" href=\"%path%\" />\n";
 
         $template = ($type == 'script') ? $script : $link;
         if (!$alreadyBuilt) {
@@ -298,6 +359,6 @@ class Header
     private static function getCurrentFile()
     {
         //remove web root and query string
-        return str_replace($GLOBALS['webroot'].'/', '', strtok($_SERVER["REQUEST_URI"], '?'));
+        return str_replace($GLOBALS['webroot'] . '/', '', strtok($_SERVER["REQUEST_URI"], '?'));
     }
 }

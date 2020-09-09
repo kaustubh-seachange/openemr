@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This is an inventory transactions list.
  *
@@ -11,11 +12,10 @@
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-
 require_once("../globals.php");
 require_once("$srcdir/patient.inc");
-require_once("$srcdir/acl.inc");
 
+use OpenEMR\Common\Acl\AclMain;
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Core\Header;
 
@@ -53,7 +53,7 @@ function thisLineItem($row, $xfer = false)
 
         $invnumber = empty($row['invoice_refno']) ?
         "{$row['pid']}.{$row['encounter']}" : $row['invoice_refno'];
-    } else if (!empty($row['distributor_id'])) {
+    } elseif (!empty($row['distributor_id'])) {
         $ttype = xl('Distribution');
         if (!empty($row['organization'])) {
             $dpname = $row['organization'];
@@ -66,9 +66,9 @@ function thisLineItem($row, $xfer = false)
                 }
             }
         }
-    } else if (!empty($row['xfer_inventory_id']) || $xfer) {
+    } elseif (!empty($row['xfer_inventory_id']) || $xfer) {
         $ttype = xl('Transfer');
-    } else if ($row['fee'] != 0) {
+    } elseif ($row['fee'] != 0) {
         $ttype = xl('Purchase');
     } else {
         $ttype = xl('Adjustment');
@@ -139,7 +139,7 @@ function thisLineItem($row, $xfer = false)
     }
 } // end function
 
-if (! acl_check('acct', 'rep')) {
+if (! AclMain::aclCheckCore('acct', 'rep')) {
     die(xlt("Unauthorized access."));
 }
 
@@ -178,7 +178,7 @@ if ($form_action == 'export') {
 
     <?php Header::setupHeader(['datetime-picker', 'report-helper']); ?>
 
-<style type="text/css">
+<style>
  /* specifically include & exclude from printing */
  @media print {
   #report_parameters {visibility: hidden; display: none;}
@@ -188,21 +188,37 @@ if ($form_action == 'export') {
 
  /* specifically exclude some from the screen */
  @media screen {
-  #report_parameters_daterange {visibility: hidden; display: none;}
+  #report_parameters_daterange {
+      visibility: hidden;
+      display: none;
+}
  }
 
- body       { font-family:sans-serif; font-size:10pt; font-weight:normal }
- .dehead    { color:#000000; font-family:sans-serif; font-size:10pt; font-weight:bold }
- .detail    { color:#000000; font-family:sans-serif; font-size:10pt; font-weight:normal }
+ body {
+     font-family:sans-serif;
+     font-size:10pt;
+     font-weight:normal;
+}
+ .dehead {
+     color:var(--black);
+     font-family:sans-serif;
+     font-size:10pt;
+     font-weight:bold;
+}
+ .detail { color:var(--black);
+     font-family:sans-serif;
+     font-size:10pt;
+     font-weight:normal;
+}
 
  #report_results table thead {
   font-size:10pt;
  }
 </style>
 
-<script language='JavaScript'>
+<script>
 
-    $(function() {
+    $(function () {
         oeFixedHeaderSetup(document.getElementById('mymaintable'));
         var win = top.printLogSetup ? top : opener.top;
         win.printLogSetup(document.getElementById('printbutton'));
@@ -249,14 +265,16 @@ if ($form_action == 'export') {
      <td nowrap>
       <select name='form_trans_type' onchange='trans_type_changed()'>
     <?php
-    foreach (array(
-    '0' => xl('All'),
-    '2' => xl('Purchase/Return'),
-    '1' => xl('Sale'),
-    '6' => xl('Distribution'),
-    '4' => xl('Transfer'),
-    '5' => xl('Adjustment'),
-    ) as $key => $value) {
+    foreach (
+        array(
+        '0' => xl('All'),
+        '2' => xl('Purchase/Return'),
+        '1' => xl('Sale'),
+        '6' => xl('Distribution'),
+        '4' => xl('Transfer'),
+        '5' => xl('Adjustment'),
+        ) as $key => $value
+    ) {
         echo "       <option value='" . attr($key) . "'";
         if ($key == $form_trans_type) {
             echo " selected";
@@ -278,8 +296,7 @@ if ($form_action == 'export') {
         <?php xl('To{{Range}}', 'e'); ?>:
      </td>
      <td nowrap>
-      <input type='text' class='datepicker' name='form_to_date' id="form_to_date" size='10'
-       value='<?php echo attr(oeFormatShortDate($form_to_date)); ?>''>
+      <input type='text' class='datepicker' name='form_to_date' id="form_to_date" size='10' value='<?php echo attr(oeFormatShortDate($form_to_date)); ?>' />
      </td>
     </tr>
    </table>
@@ -288,14 +305,14 @@ if ($form_action == 'export') {
    <table style='border-left:1px solid; width:100%; height:100%'>
     <tr>
      <td valign='middle'>
-      <a href='#' class='css_button' onclick='mysubmit("submit")' style='margin-left:1em'>
+      <a href='#' class='btn btn-primary' onclick='mysubmit("submit")' style='margin-left:1em'>
        <span><?php echo xlt('Submit'); ?></span>
       </a>
     <?php if ($form_action) { ?>
-      <a href='#' class='css_button' id='printbutton' style='margin-left:1em'>
+      <a href='#' class='btn btn-primary' id='printbutton' style='margin-left:1em'>
        <span><?php echo xlt('Print'); ?></span>
       </a>
-      <a href='#' class='css_button' onclick='mysubmit("export")' style='margin-left:1em'>
+      <a href='#' class='btn btn-primary' onclick='mysubmit("export")' style='margin-left:1em'>
        <span><?php echo xlt('CSV Export'); ?></span>
       </a>
 <?php } ?>
@@ -377,13 +394,13 @@ if ($form_action) { // if submit or export
     "WHERE s.sale_date >= ? AND s.sale_date <= ? ";
     if ($form_trans_type == 2) { // purchase/return
         $query .= "AND s.pid = 0 AND s.distributor_id = 0 AND s.xfer_inventory_id = 0 AND s.fee != 0 ";
-    } else if ($form_trans_type == 4) { // transfer
+    } elseif ($form_trans_type == 4) { // transfer
         $query .= "AND s.xfer_inventory_id != 0 ";
-    } else if ($form_trans_type == 5) { // adjustment
+    } elseif ($form_trans_type == 5) { // adjustment
         $query .= "AND s.pid = 0 AND s.distributor_id = 0 AND s.xfer_inventory_id = 0 AND s.fee = 0 ";
-    } else if ($form_trans_type == 6) { // distribution
+    } elseif ($form_trans_type == 6) { // distribution
         $query .= "AND s.distributor_id != 0 ";
-    } else if ($form_trans_type == 1) { // sale
+    } elseif ($form_trans_type == 1) { // sale
         $query .= "AND s.pid != 0 ";
     }
 

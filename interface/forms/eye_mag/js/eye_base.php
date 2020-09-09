@@ -13,7 +13,6 @@
  */
 
     require_once("../../../globals.php");
-    require_once("$srcdir/acl.inc");
     require_once("$srcdir/api.inc");
     require_once("$srcdir/forms.inc");
     require_once("$srcdir/patient.inc");
@@ -1201,7 +1200,7 @@ function build_DX_list(obj) {
     if (typeof obj.PMSFH === "undefined") return;
     if (typeof obj.Clinical === "undefined") submit_form('obj.clinical is undefined');
     if (!obj.PMSFH['POH']  && !obj.PMSFH['PMH'] && !obj.Clinical) {
-        out = '<br /><span class="bold">The Past Ocular History (POH) and Past Medical History (PMH) are negative and no diagnosis was auto-generated from the clinical findings.</span><br /><br>Update the chart to activate the Builder.<br />';
+        out = '<br /><span class="bold">The Past Ocular History (POH) and Past Medical History (PMH) are negative and no diagnosis was auto-generated from the clinical findings.</span><br /><br />Update the chart to activate the Builder.<br />';
         $( "#build_DX_list" ).html(out);
         return;
     }
@@ -1210,7 +1209,7 @@ function build_DX_list(obj) {
         $.each(obj.Clinical, function(key, value) {
                diagnosis='';
                if (obj.Clinical[key][0].diagnosis > '') { //so we are just showing this first item of each Dx (Eg bilateral, x4 pterygium, only first shows up)
-               diagnosis = "<code class='pull-right ICD_CODE'>"+obj.Clinical[key][0].code+"</code>";
+               diagnosis = "<code class='float-right ICD_CODE'>"+obj.Clinical[key][0].code+"</code>";
                }
                out += "<li class='ui-widget-content'><span name='DX_Clinical_"+key+"' id='DX_Clinical_"+key+"'>"+obj.Clinical[key][0].title+"</span> "+diagnosis+"</li> ";
                });
@@ -1220,14 +1219,14 @@ function build_DX_list(obj) {
         $.each(obj.PMSFH['POH'], function(key, value) {
                diagnosis='';
                if (obj.PMSFH['POH'][key].diagnosis > '' ) {
-               diagnosis = "<code class='pull-right ICD_CODE'>"+obj.PMSFH['POH'][key].code+"</code>";
+               diagnosis = "<code class='float-right ICD_CODE'>"+obj.PMSFH['POH'][key].code+"</code>";
                }
                out += "<li class='ui-widget-content'><span name='DX_POH_"+key+"' id='DX_POH_"+key+"'>"+obj.PMSFH['POH'][key].title+"</span> "+diagnosis+"</li>";
                });
         $.each(obj.PMSFH['POS'], function(key, value) {
                diagnosis='';
                if (obj.PMSFH['POS'][key].diagnosis > '' ) {
-               diagnosis = "<code class='pull-right ICD_CODE'>"+obj.PMSFH['POS'][key].code+"</code>";
+               diagnosis = "<code class='float-right ICD_CODE'>"+obj.PMSFH['POS'][key].code+"</code>";
                }
                out += "<li class='ui-widget-content'><span name='DX_POS_"+key+"' id='DX_POS_"+key+"'>"+obj.PMSFH['POS'][key].title+"</span> "+diagnosis+"</li>";
                });
@@ -1236,7 +1235,7 @@ function build_DX_list(obj) {
         $.each(obj.PMSFH['PMH'], function(key, value) {
                diagnosis='';
                if (obj.PMSFH['PMH'][key].diagnosis > '') {
-               diagnosis = "<code class='pull-right ICD_CODE'>"+obj.PMSFH['PMH'][key].code+"</code>";
+               diagnosis = "<code class='float-right ICD_CODE'>"+obj.PMSFH['PMH'][key].code+"</code>";
                }
                out += "<li class='ui-widget-content'><span name='DX_PMH_"+key+"' id='DX_PMH_"+key+"'>"+obj.PMSFH['PMH'][key].title+"</span>"+diagnosis+"</li> ";
                });
@@ -1256,9 +1255,9 @@ function build_DX_list(obj) {
             //this places the handle for the user to drag the item around.
         .prepend( "<div class='handle '><i class='fa fa-arrows fa-1'></i></div>" );
     } else {
-        out = '<br /><span class="bold"><?php echo xlt("Build Your Plan")."."; ?></span><br /><br>';
-        out += '<?php echo xlt('Suggestions for the Imp/Plan are built from the Exam, the Past Ocular History (POH and POS) and the Past Medical History (PMH)')."."; ?><br />';
-        out += '<?php echo xlt('Update the chart to build this list')."."; ?><br />';
+        out = '<br /><span class="bold"><?php echo xlt("Build Your Plan") . "."; ?></span><br /><br />';
+        out += '<?php echo xlt('Suggestions for the Imp/Plan are built from the Exam, the Past Ocular History (POH and POS) and the Past Medical History (PMH)') . "."; ?><br />';
+        out += '<?php echo xlt('Update the chart to build this list') . "."; ?><br />';
         $( "#build_DX_list" ).html(out);
     }
 }
@@ -1389,13 +1388,13 @@ function build_IMPPLAN(items,nodisplay) {
                var title2 = value.title.replace(/(\')/g, '');
                contents_here = "<span class='bold' contenteditable title='<?php echo xla('Click to edit'); ?>' id='IMPRESSION_"+index+"'>" +
                value.title +"</span>"+
-               "<span contenteditable class='pull-right' onclick='sel_diagnosis("+index+",\""+title2+"\");' title='"+value.codetext+"' id='CODE_"+index+"'>"+
+               "<span contenteditable class='float-right' onclick='sel_diagnosis("+index+",\""+title2+"\");' title='"+value.codetext+"' id='CODE_"+index+"'>"+
                value.code + "</span>&nbsp;"+
                "<br /><textarea id='PLAN_"+index+"' name='PLAN_"+index+
                "' style='width:100%;max-width:100%;height:auto;min-height:3em;overflow-y: hidden;padding-top: 1.1em; '>"+
                value.plan +"</textarea><br /></li>";
                $('#IMPPLAN_zone').append('<div id="IMPPLAN_zone_'+index+'" class="IMPPLAN_class">'+
-                                         '<i class="pull-right fa fa-close" id="BUTTON_IMPPLAN_'+index+'"></i>'+
+                                         '<i class="float-right fa fa-close" id="BUTTON_IMPPLAN_'+index+'"></i>'+
                                          contents_here+'</div>');
                $('#BUTTON_IMPPLAN_'+index).on('click', function() {//delete/close icon
                                                  var item = this.id.match(/BUTTON_IMPPLAN_(.*)/)[1];
@@ -1932,7 +1931,7 @@ shortcut.add("Control+K",function() {
 shortcut.add("Meta+K",function() {
              show_KB();
              });
-$(function(){
+$(function () {
   /*
    * this swallows backspace keys on the "rx" elements.
    * stops backspace -> back a page in the browser, a very annoying thing indeed.
@@ -2162,7 +2161,7 @@ function showpnotes(docid) {
     let url = base+'/interface/patient_file/summary/pnotes.php?docid=' + encodeURIComponent(docid);
     dlgopen(url, 'pno1', 'modal-xl', 500, '', '', {
         buttons: [
-                {text: btnClose, close: true, style: 'default btn-xs'}
+                {text: btnClose, close: true, style: 'default btn-sm'}
             ],
         sizeHeight: 'auto',
         allowResize: true,
@@ -2208,7 +2207,7 @@ show_left();
     return true;
 }
 
-$(function() {
+$(function () {
                   check_lock();
 
                   var allPanels = $('.building_blocks > dd').hide();
@@ -3402,38 +3401,38 @@ $("body").on("click","[name^='old_canvas']", function() {
                                               // Let's see if the public likes the form itself before developing these subspecialty lists...
 
                                                 //Copy the Eye_Defaults_for_GENERAL to Eye_defaults_$providerID
-                                                $sql="SELECT * from list_options where list_id = 'Eye_Defaults_for_GENERAL'";
-                                                $start= sqlStatement($sql);
+                                                $sql = "SELECT * from list_options where list_id = 'Eye_Defaults_for_GENERAL'";
+                                                $start = sqlStatement($sql);
                                                 $add_fields = array();
-                                                while ($val= sqlFetchArray($start)) {
+                                                while ($val = sqlFetchArray($start)) {
                                                     $parameters .= "(?, ?, ?, ?, ?, ?),";
-                                                    array_push($add_fields, "Eye_defaults_".$providerID, $val['option_id'], $val['title'], $val['notes'], '1', $val['seq']);
+                                                    array_push($add_fields, "Eye_defaults_" . $providerID, $val['option_id'], $val['title'], $val['notes'], '1', $val['seq']);
                                                 }
                                                 $parameters = rtrim($parameters, ",");
                                                 $query = "SELECT max(seq) as maxseq FROM list_options WHERE list_id= 'lists'";
                                                 $pres = sqlStatement($query);
                                                 $maxseq = sqlFetchArray($pres);
 
-                                                $seq=$maxseq['maxseq'];
+                                                $seq = $maxseq['maxseq'];
                                                 $query = "INSERT INTO `list_options`
                                                     (`list_id`, `option_id`, `title`, `seq`, `is_default`, `option_value`, `mapping`, `notes`, `codes`) VALUES
                                                     ('lists', ?, ?, ?, '1', '0', '', '', '')";
                                                 $providerNAME = getProviderName($providerID);
 
                                                 sqlStatement($query, array("Eye_defaults_$providerID","Eye Exam Defaults $providerNAME ",$seq));
-                                                $query = "INSERT INTO `list_options` (`list_id`, `option_id`, `title`,`notes`,`activity`,`seq`) VALUES ".$parameters;
+                                                $query = "INSERT INTO `list_options` (`list_id`, `option_id`, `title`,`notes`,`activity`,`seq`) VALUES " . $parameters;
                                                 sqlStatement($query, $add_fields);
                                             }
 
                                             $query = "select * from list_options where list_id =? and activity='1' order by seq";
 
-                                            $DEFAULT_data =sqlStatement($query, array("Eye_defaults_$providerID"));
+                                            $DEFAULT_data = sqlStatement($query, array("Eye_defaults_$providerID"));
                                             while ($row = sqlFetchArray($DEFAULT_data)) {
                                             //$row['notes'] is the clinical zone (EXT,ANTSEG,RETINA,NEURO)
                                             //$row['option_id'] is the field name
                                             //$row['title'] is the default value to use for this provider
                                                 ${$row['notes']}[$row['option_id']] = $row['title']; //This builds each clinical section into its own array (used below)
-                                                echo '$("#'.$row['option_id'].'").val("'.$row['title'].'").css("background-color","beige");
+                                                echo '$("#' . $row['option_id'] . '").val("' . $row['title'] . '").css("background-color","beige");
                                             ';
                                             }
                                             ?>
@@ -3443,7 +3442,7 @@ $("body").on("click","[name^='old_canvas']", function() {
                   $("#EXT_defaults").on("click", function() {
                                             <?php
                                             foreach ($EXT as $item => $value) {
-                                                echo '$("#'.$item.'").val("'.$value.'").css("background-color","beige");
+                                                echo '$("#' . $item . '").val("' . $value . '").css("background-color","beige");
                                            ';
                                             }
                                             ?>
@@ -3453,7 +3452,7 @@ $("body").on("click","[name^='old_canvas']", function() {
                   $("#ANTSEG_defaults").on("click", function() {
                                                 <?php
                                                 foreach ($ANTSEG as $item => $value) {
-                                                    echo '$("#'.$item.'").val("'.$value.'").css("background-color","beige");
+                                                    echo '$("#' . $item . '").val("' . $value . '").css("background-color","beige");
                                               ';
                                                 }
                                                 ?>
@@ -3462,7 +3461,7 @@ $("body").on("click","[name^='old_canvas']", function() {
                   $("#RETINA_defaults").on("click", function() {
                                                 <?php
                                                 foreach ($RETINA as $item => $value) {
-                                                    echo '$("#'.$item.'").val("'.$value.'").css("background-color","beige");
+                                                    echo '$("#' . $item . '").val("' . $value . '").css("background-color","beige");
                                               ';
                                                 }
                                                 ?>
@@ -3471,7 +3470,7 @@ $("body").on("click","[name^='old_canvas']", function() {
                   $("#NEURO_defaults").on("click", function() {
                                                 <?php
                                                 foreach ($NEURO as $item => $value) {
-                                                    echo '$("#'.$item.'").val("'.$value.'").css("background-color","beige");
+                                                    echo '$("#' . $item . '").val("' . $value . '").css("background-color","beige");
                                              ';
                                                 }
                                                 ?>

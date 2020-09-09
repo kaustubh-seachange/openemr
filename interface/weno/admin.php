@@ -1,4 +1,5 @@
 <?php
+
 /**
  * weno admin.
  *
@@ -11,10 +12,10 @@
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-
 require_once('../globals.php');
 require_once("$srcdir/options.inc.php");
 
+use OpenEMR\Common\Acl\AclMain;
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Core\Header;
 use OpenEMR\Rx\Weno\AdminProperties;
@@ -63,7 +64,7 @@ $data = new AdminProperties();
 <?php
 
 // check to make sure only administrators access this page.
-if (!acl_check('admin', 'super')) {
+if (!AclMain::aclCheckCore('admin', 'super')) {
     die(xlt("You are not authorized!"));
 }
 
@@ -71,23 +72,23 @@ if ($GLOBALS['weno_rx_enable'] != 1) {
     print xlt("You must activate Weno first! Go to Administration, Globals, Connectors");
     exit;
 } else {
-    print xlt("Weno Service is Enabled")."<br><br>";
+    print xlt("Weno Service is Enabled") . "<br /><br />";
 }
 
 if ($tableHasData['count'] > 1) {
-    print xlt("Formularies are inserted into table")."<br>";
+    print xlt("Formularies are inserted into table") . "<br />";
 } else {
-    echo "<a href='drugDataInsert.php?csrf_token_form=" . attr_url(CsrfUtils::collectCsrfToken()) . "' class='btn btn-default'>".xlt("Import Formularies")."</a> <br>".xlt("Be patient, this can take a while.");
+    echo "<a href='drugDataInsert.php?csrf_token_form=" . attr_url(CsrfUtils::collectCsrfToken()) . "' class='btn btn-secondary'>" . xlt("Import Formularies") . "</a> <br />" . xlt("Be patient, this can take a while.");
 }
 
 ?>
 
-<br><br>
+<br /><br />
 <?php
 
 
 ?>
-    <h2><?php echo xlt("Pharmacy Import / Update"); ?></h2><br>
+    <h2><?php echo xlt("Pharmacy Import / Update"); ?></h2><br />
     <form class="form-inline" id="addpharmacies">
         <div class="form-group">
             <label for="city" ><?php print xlt("City");?></label>
@@ -105,7 +106,7 @@ if ($tableHasData['count'] > 1) {
     </form>
     <p>
         <h4><?php echo xlt("Disclaimer"); ?>:</h4>
-    <?php echo xlt("This is public information maintained by HHS/CMS. We cannot be responsible for the data received"); ?>.<br>
+    <?php echo xlt("This is public information maintained by HHS/CMS. We cannot be responsible for the data received"); ?>.<br />
     <?php echo xlt("Utilize at your own risk. Always verify data received"); ?>.
     </p>
 </div>

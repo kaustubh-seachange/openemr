@@ -3,30 +3,31 @@
  * seen in the patient summary screen
  *============================================================*/
 
-#patient_stats_summary table {
+#patient_stats_summary {
+  table {
     border-collapse: collapse;
+  }
+
+  .noend_noreturn {
+    color: $danger;
+  }
+
+  .noend {
+    color: $orange;
+  }
+
+  .noreturn {
+    color: $primary;
+  }
+
+  .title {
+    @include font-size("1.1rem");
+  }
 }
-#patient_stats_summary .noend_noreturn {
-    color: #ee0000;
-}
-#patient_stats_summary .noend {
-    color: #dd5500;
-}
-#patient_stats_summary .noreturn {
-    color: #0000ff;
-}
-#patient_stats_summary .title {
-    font-size: 1.1em;
-}
-#patient_stats_issues {
-    width: 100%;
-}
-#patient_stats_spreadsheets {
-    width: 100%;
-}
-#patient_stats_imm {
-    width: 100%;
-}
+
+#patient_stats_issues,
+#patient_stats_spreadsheets,
+#patient_stats_imm,
 #patient_stats_prescriptions {
-    width: 100%;
+  width: 100%;
 }

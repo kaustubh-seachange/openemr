@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This script delete an Encounter form.
  *
@@ -11,7 +12,6 @@
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-
 require_once("../../globals.php");
 require_once(dirname(__FILE__) . "/../../../library/forms.inc");
 
@@ -20,7 +20,7 @@ use OpenEMR\Common\Logging\EventAuditLogger;
 use OpenEMR\Core\Header;
 
 // allow a custom 'delete' form
-$deleteform = $incdir . "/forms/" . $_REQUEST["formname"]."/delete.php";
+$deleteform = $incdir . "/forms/" . $_REQUEST["formname"] . "/delete.php";
 
 check_file_dir_name($_REQUEST["formname"]);
 
@@ -55,53 +55,59 @@ if ($_POST['confirm']) {
         );
     }
     // log the event
-    EventAuditLogger::instance()->newEvent("delete", $_SESSION['authUser'], $_SESSION['authProvider'], 1, "Form ".$_POST['formname']." deleted from Encounter ".$_POST['encounter']);
+    EventAuditLogger::instance()->newEvent("delete", $_SESSION['authUser'], $_SESSION['authProvider'], 1, "Form " . $_POST['formname'] . " deleted from Encounter " . $_POST['encounter']);
 
     // redirect back to the encounter
     $address = "{$GLOBALS['rootdir']}/patient_file/encounter/$returnurl";
-    echo "\n<script language='Javascript'>top.restoreSession();window.location='$address';</script>\n";
+    echo "\n<script>top.restoreSession();window.location='$address';</script>\n";
     exit;
 }
 ?>
 <html>
 
 <head>
-<?php Header::setupHeader(['no_bootstrap', 'no_fontawesome', 'no_textformat', 'no_dialog' ]); ?>
+    <?php Header::setupHeader(); ?>
+    <title><?php echo xlt('Delete Encounter Form'); ?></title>
 </head>
 
-<body class="body_top">
+<body>
+    <div class="container mt-3">
+        <div class="row">
+            <div class="col-12">
+                <h2><?php echo xlt('Delete Encounter Form'); ?></h2>
+                <form method="post" action="<?php echo $rootdir;?>/patient_file/encounter/delete_form.php" name="my_form" id="my_form">
+                    <input type="hidden" name="csrf_token_form" value="<?php echo attr(CsrfUtils::collectCsrfToken()); ?>" />
+                    <?php
+                    // output each GET variable as a hidden form input
+                    foreach ($_GET as $key => $value) {
+                        echo '<input type="hidden" id="' . attr($key) . '" name="' . attr($key) . '" value="' . attr($value) . '"/>' . "\n";
+                    }
+                    ?>
+                    <input type="hidden" id="confirm" name="confirm" value="1" />
 
-<span class="title"><?php echo xlt('Delete Encounter Form'); ?></span>
-
-<form method="post" action="<?php echo $rootdir;?>/patient_file/encounter/delete_form.php" name="my_form" id="my_form">
-<input type="hidden" name="csrf_token_form" value="<?php echo attr(CsrfUtils::collectCsrfToken()); ?>" />
-
-<?php
-// output each GET variable as a hidden form input
-foreach ($_GET as $key => $value) {
-    echo '<input type="hidden" id="'.attr($key).'" name="'.attr($key).'" value="'.attr($value).'"/>'."\n";
-}
-?>
-<input type="hidden" id="confirm" name="confirm" value="1"/>
-<p>
-<?php
-
-$formdir=$_GET["formname"];
-$formName=getFormNameByFormdir($formdir);
-echo xlt('You are about to delete the following form from this encounter') . ': ' . text(xl_form_title($formName["form_name"]));
-
-?>
-</p>
-<input type="button" id="confirmbtn" name="confirmbtn" value='<?php echo xla('Yes, Delete this form'); ?>'>
-<input type="button" id="cancel" name="cancel" value='<?php echo xla('Cancel'); ?>'>
-</form>
-
-</body>
-
-<script language="javascript">
+                    <p>
+                    <?php
+                    $formdir = $_GET["formname"];
+                    $formName = getFormNameByFormdir($formdir);
+                    echo xlt('You are about to delete the following form from this encounter') . ': ' . text(xl_form_title($formName["form_name"]));
+                    ?>
+                    </p>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-danger btn-delete" id="confirmbtn" name="confirmbtn" value='<?php echo xla('Yes, Delete this form'); ?>'>
+                            <?php echo xlt('Yes, Delete this form'); ?>
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-cancel" id="cancel" name="cancel" value='<?php echo xla('Cancel'); ?>'>
+                            <?php echo xlt('Cancel'); ?>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+<script>
 // jQuery stuff to make the page a little easier to use
 
-$(function (){
+$(function () {
     $("#confirmbtn").on("click", function() { return ConfirmDelete(); });
     $("#cancel").on("click", function() { location.href='<?php echo "$rootdir/patient_file/encounter/$returnurl";?>'; });
 });
@@ -114,7 +120,6 @@ function ConfirmDelete() {
     }
     return false;
 }
-
 </script>
-
+</body>
 </html>

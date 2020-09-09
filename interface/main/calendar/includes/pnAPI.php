@@ -1,4 +1,5 @@
 <?php
+
 // $Id$
 // ----------------------------------------------------------------------
 // PostNuke Content Management System
@@ -119,8 +120,10 @@ function pnConfigInit()
     while (!$dbresult->EOF) {
         list($k, $v) = $dbresult->fields;
         $dbresult->MoveNext();
-        if (($k != 'dbtype') && ($k != 'dbhost') && ($k != 'dbuname') && ($k != 'dbpass')
-                && ($k != 'dbname') && ($k != 'system') && ($k != 'prefix') && ($k != 'encoded')) {
+        if (
+            ($k != 'dbtype') && ($k != 'dbhost') && ($k != 'dbuname') && ($k != 'dbpass')
+                && ($k != 'dbname') && ($k != 'system') && ($k != 'prefix') && ($k != 'encoded')
+        ) {
             $pnconfig[$k] = $v;
         }
     }
@@ -194,7 +197,7 @@ function pnConfigGetVar($name)
 
 /**
  * Initialise PostNuke
- * <br>
+ * <br />
  * Carries out a number of initialisation tasks to get PostNuke up and
  * running.
  * @returns void
@@ -264,15 +267,25 @@ function pnDBInit()
         }
     }
     $dbconn->port = $dbport;
-    $dbh = $dbconn->Connect($dbhost, $dbuname, $dbpass, $dbname);
+
+    if ($GLOBALS["enable_database_connection_pooling"] && ($GLOBALS['connection_pooling_off'] !== true)) {
+        $dbh = $dbconn->PConnect($dbhost, $dbuname, $dbpass, $dbname);
+    } else {
+        $dbh = $dbconn->connect($dbhost, $dbuname, $dbpass, $dbname);
+    }
     if (!$dbh) {
         //$dbpass = "";
         //die("$dbtype://$dbuname:$dbpass@$dbhost/$dbname failed to connect" . $dbconn->ErrorMsg());
-        die("<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\">\n<title>PostNuke powered Website</title>\n</head>\n<body>\n<center>\n<h1>Problem in Database Connection</h1>\n<br /><br />\n<h5>This Website is powered by PostNuke</h5>\n<a href=\"http://www.postnuke.com\" rel=\"noopener\" target=\"_blank\"><img src=\"images/powered/postnuke.butn.gif\" border=\"0\" alt=\"Web site powered by PostNuke\" hspace=\"10\" /></a> <a href=\"https://php.weblogs.com/ADODB\" rel=\"noopener\" target=\"_blank\"><img src=\"images/powered/adodb2.gif\" alt=\"ADODB database library\" border=\"0\" hspace=\"10\" /></a><a href=\"https://www.php.net\" rel=\"noopener\" target=\"_blank\"><img src=\"images/powered/php2.gif\" alt=\"PHP Scripting Language\" border=\"0\" hspace=\"10\" /></a><br />\n<h5>Although this site is running the PostNuke software<br />it has no other connection to the PostNuke Developers.<br />Please refrain from sending messages about this site or its content<br />to the PostNuke team, the end will result in an ignored e-mail.</h5>\n</center>\n</body>\n</html>");
+        die("<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=ISO-8859-1\">\n<title>PostNuke powered Website</title>\n</head>\n<body>\n<center>\n<h1>Problem in Database Connection</h1>\n<br /><br />\n<h5>This Website is powered by PostNuke</h5>\n<a href=\"http://www.postnuke.com\" rel=\"noopener\" target=\"_blank\"><img src=\"images/powered/postnuke.butn.gif\" border=\"0\" alt=\"Web site powered by PostNuke\" hspace=\"10\" /></a> <a href=\"https://php.weblogs.com/ADODB\" rel=\"noopener\" target=\"_blank\"><img src=\"images/powered/adodb2.gif\" alt=\"ADODB database library\" border=\"0\" hspace=\"10\" /></a><a href=\"https://www.php.net\" rel=\"noopener\" target=\"_blank\"><img src=\"images/powered/php2.gif\" alt=\"PHP Scripting Language\" border=\"0\" hspace=\"10\" /></a><br />\n<h5>Although this site is running the PostNuke software<br />it has no other connection to the PostNuke Developers.<br />Please refrain from sending messages about this site or its content<br />to the PostNuke team, the end will result in an ignored e-mail.</h5>\n</center>\n</body>\n</html>");
     }
 
     // Modified 5/2009 by BM for UTF-8 project
-    if ($pnconfig['utf8Flag']) {
+    if ($pnconfig['db_encoding'] == "utf8mb4") {
+        $success_flag = $dbconn->Execute("SET NAMES 'utf8mb4'");
+        if (!$success_flag) {
+            error_log("PHP custom error: from postnuke interface/main/calendar/includes/pnAPI.php - Unable to set up UTF8MB4 encoding with mysql database", 0);
+        }
+    } elseif ($pnconfig['db_encoding'] == "utf8") {
         $success_flag = $dbconn->Execute("SET NAMES 'utf8'");
         if (!$success_flag) {
             error_log("PHP custom error: from postnuke interface/main/calendar/includes/pnAPI.php - Unable to set up UTF8 encoding with mysql database", 0);
@@ -331,7 +344,7 @@ function pnDBGetTables()
 
 /**
  * clean user input
- * <br>
+ * <br />
  * Gets a global variable, cleaning it up to try to ensure that
  * hack attacks don't work
  * @param var name of variable to get
@@ -386,7 +399,7 @@ function pnVarCleanFromInput()
 
 /**
  * ready user output
- * <br>
+ * <br />
  * Gets a variable, cleaning it up such that the text is
  * shown exactly as expected
  * @param var variable to prepare
@@ -437,7 +450,7 @@ function pnVarPrepForDisplay()
 
 /**
  * ready HTML output
- * <br>
+ * <br />
  * Gets a variable, cleaning it up such that the text is
  * shown exactly as expected, except for allowed HTML tags which
  * are allowed through
@@ -510,7 +523,7 @@ function pnVarPrepHTMLDisplay()
 
 /**
  * ready databse output
- * <br>
+ * <br />
  * Gets a variable, cleaning it up such that the text is
  * stored in a database exactly as expected
  * @param var variable to prepare
@@ -540,7 +553,7 @@ function pnVarPrepForStore()
 
 /**
  * ready operating system output
- * <br>
+ * <br />
  * Gets a variable, cleaning it up such that any attempts
  * to access files outside of the scope of the PostNuke
  * system is not allowed
@@ -601,8 +614,10 @@ function pnGetBaseURI()
         $path = getenv('REQUEST_URI');
     }
 
-    if ((empty($path)) ||
-        (substr($path, -1, 1) == '/')) {
+    if (
+        (empty($path)) ||
+        (substr($path, -1, 1) == '/')
+    ) {
         // REQUEST_URI was empty or pointed to a path
         // Try looking at PATH_INFO
         $path = getenv('PATH_INFO');

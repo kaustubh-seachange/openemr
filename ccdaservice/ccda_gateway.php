@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ccda_gateway.php
  *
@@ -67,6 +68,9 @@ if (!isset($_SESSION['site_id'])) {
     $_SESSION ['site_id'] = 'default';
 }
 
+// This is to close session write access when called from portal (core session already can not write to session)
+session_write_close();
+
 $server_url = $_SERVER['HTTP_HOST'] . $GLOBALS['webroot'];
 // CCM returns entire cda with service doing templates
 $ccdaxml = portalccdafetching($pid, $server_url, $parameterArray);
@@ -75,7 +79,7 @@ $h = '';
 if (!$parameterArray ['view']) {
     header('Content-Type: application/xml');
 } else {
-    $h = '<a href="./../portal/home.php" </a><button style="color: red; background: white;" >' . xlt("Return Home") . '</button><br>';
+    $h = '<a class="text-danger bg-white" href="./../portal/home.php">' . xlt("Return Home") . '</a><br />';
 }
 
 print_r($h . $ccdaxml . $h);
@@ -84,7 +88,6 @@ exit;
 
 function portalccdafetching($pid, $server_url, $parameterArray)
 {
-    session_write_close();
     $site_id = $_SESSION['site_id'];
     $parameters = http_build_query($parameterArray); // future use
     try {

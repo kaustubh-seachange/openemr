@@ -251,7 +251,7 @@ div.tiny { width:1px; height:1px; font-size:1px; }
     echo "<span id='daterange'>";
     $atmp = array_keys($A_EVENTS);
     echo date('d F Y', strtotime($atmp[0]));
-    echo "<br><span style='font-size:0.8em;font-weight:normal'>" . xlt(date('l', strtotime($atmp[0]))) . "</span>";
+    echo "<br /><span style='font-size:0.8em;font-weight:normal'>" . xlt(date('l', strtotime($atmp[0]))) . "</span>";
     echo "</span>";
     echo "</div>";
 
@@ -287,10 +287,18 @@ echo "<table border='0' cellpadding='1' cellspacing='0' width='100%'>\n";
 echo "<tr>";
 echo "<td id='times' style='width:2em;'><div><table>\n";
 echo "<td class='timeslot' style='text-align: center; background-color:#ddd;'>&nbsp;</td>";
+
+if ($GLOBALS['time_display_format'] == 1) {
+    timeformat = 12;
+} else {
+    timeformat = 0;
+}
+
+
 foreach ($times as $slottime) {
     $startampm = ($slottime['mer']) == "pm" ? 2 : 1;
     $starttimeh = $slottime['hour'];
-    $disptimeh = ($starttimeh > 12) ? ($starttimeh - 12) : $starttimeh;
+    $disptimeh = ($starttimeh > 12) ? ($starttimeh - $timeformat) : $starttimeh;
     $starttimem = $slottime['minute'];
     $slotendmins = $starttimeh * 60 + $starttimem + $interval;
 
@@ -421,7 +429,7 @@ foreach ($providers as $provider) {
             $starth = substr($event['startTime'], 0, 2);
             $startm = substr($event['startTime'], 3, 2);
             $eStartMin = $starth * 60 + $startm;
-            $dispstarth = ($starth > 12) ? ($starth - 12) : $starth;
+            $dispstarth = ($starth > 12) ? ($starth - $timeformat) : $starth;
 
             // determine the class for the event DIV based on the event category
             $evtClass = "event_appointment";
@@ -550,18 +558,18 @@ foreach ($providers as $provider) {
                 $content .= text($event['apptstatus']);
 
                 if ($patientid) {
-                    if ($catid == 1) $content .= "<strike>";
+                    if ($catid == 1) $content .= "<s>";
                     $content .= text($lname);
                     if ($GLOBALS['calendar_appt_style'] != 1) {
                         $content .= "," . text($fname);
                         if ($event['title'] && $GLOBALS['calendar_appt_style'] >= 3) {
                             $content .= "(" . text($event['title']);
                             if ($event['hometext'] && $GLOBALS['calendar_appt_style'] >= 4)
-                                $content .= ": <font color='green'>" . text(trim($event['hometext'])) . "</font>";
+                                $content .= ": <span class='text-success'>" . text(trim($event['hometext'])) . "</span>";
                             $content .= ")";
                         }
                     }
-                    if ($catid == 1) $content .= "</strike>";
+                    if ($catid == 1) $content .= "</s>";
                 }
                 else {
                     // no patient id, just output the category name
@@ -695,7 +703,7 @@ function PrintDatePicker($caldate, $DOWlist, $daynames) {
 </body>
 
 <script>
-$(function() {
+$(function () {
     var win = top.printLogPrint ? top : opener.top;
     win.printLogPrint(window);
 });

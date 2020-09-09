@@ -4,80 +4,65 @@
  *============================================================*/
 
 #report_custom {
-    width: 100%;
-}
-#report_custom hr {
-    border: 2px dotted black;
-}
-#report_custom .billing {
+  width: 100%;
+
+  hr {
+    border: 2px dotted $black;
+  }
+
+  .billing,
+  .immunizations,
+  .notes,
+  .transactions,
+  .communications,
+  .documents,
+  .demographics,
+  .insurance,
+  .history {
     margin: 5px;
     padding: 5px;
-}
-#report_custom h1 {
+  }
+
+  h1 {
     font-size: 120%;
-    margin: 0px 0px 5px 0px;
-    padding: 0px;
-}
-#report_custom .immunizations {
-    margin: 5px;
-    padding: 5px;
-}
-#report_custom .notes {
-    margin: 5px;
-    padding: 5px;
-}
-#report_custom .transactions {
-    margin: 5px;
-    padding: 5px;
-}
-#report_custom .communications {
-    margin: 5px;
-    padding: 5px;
-}
-#report_custom .documents {
-    margin: 5px;
-    padding: 5px;
-}
-#report_custom .demographics {
-    margin: 5px;
-    padding: 5px;
-}
-#report_custom .insurance {
-    margin: 5px;
-    padding: 5px;
-}
-#report_custom .history {
-    margin: 5px;
-    padding: 5px;
-}
-#report_custom .issue {
+    margin: 0 0 5px;
+    padding: 0;
+  }
+
+  .issue {
     margin-left: 20px;
-}
-#report_custom .issue_type {
+  }
+
+  .issue_type {
     font-weight: bold;
-    padding: 5px 0px 5px 0px;
-}
-#report_custom .issue_diag {
-    margin: 0px 20px 0px 20px;
-}
-#report_custom .encounter {
-    width: 100%;
-    border-top: 2px dotted black;
-    padding: 10px 5px 10px 5px;
+    padding: 5px 0;
+  }
+
+  .issue_diag {
+    margin: 0 20px;
+  }
+
+  .encounter {
+    border-top: 2px dotted $black;
     margin-top: 10px;
-}
-#report_custom .encounter h1 {
-    font-size: 140%;
-    margin: 0px;
-    padding: 0px;
-}
-#report_custom .encounter_form {
-    border-top: 1px solid gray;
+    padding: 10px 5px;
+    width: 100%;
+
+    h1 {
+      font-size: 140%;
+      margin: 0;
+      padding: 0;
+    }
+
+    &_form {
+      border-top: 1px solid $gray;
+    }
+  }
 }
 
 @include if-rtl {
-    #report_custom .encounter_form {
-        margin: 10px;
-        padding: 10px;
-    }
+  #report_custom .encounter_form {
+    margin: 10px;
+    padding: 10px;
+  }
 }

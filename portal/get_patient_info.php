@@ -1,4 +1,5 @@
 <?php
+
 /**
  * portal/get_patient_info.php
  *
@@ -111,7 +112,13 @@ if ($password_update === 2 && !empty($_SESSION['pin'])) {
     // normal login
     $sql = "SELECT " . implode(",", array(
             COL_ID, COL_PID, COL_POR_PWD, COL_POR_USER, COL_POR_LOGINUSER, COL_POR_PWD_STAT)) . " FROM " . TBL_PAT_ACC_ON .
-        " WHERE BINARY " . COL_POR_LOGINUSER . "= ?";
+        " WHERE " . COL_POR_LOGINUSER . "= ?";
+    if ($password_update === 1) {
+        $sql = "SELECT " . implode(",", array(
+                COL_ID, COL_PID, COL_POR_PWD, COL_POR_USER, COL_POR_LOGINUSER, COL_POR_PWD_STAT)) . " FROM " . TBL_PAT_ACC_ON .
+            " WHERE " . COL_POR_USER . "= ?";
+    }
+
     $auth = privQuery($sql, array($_POST['uname']));
 }
 if ($auth === false) {
@@ -162,9 +169,7 @@ $_SESSION['portal_login_username'] = $auth[COL_POR_LOGINUSER];
 
 $sql = "SELECT * FROM `patient_data` WHERE `pid` = ?";
 
-if ($userData = sqlQuery($sql, array(
-    $auth['pid']
-))) { // if query gets executed
+if ($userData = sqlQuery($sql, array($auth['pid']))) { // if query gets executed
     if (empty($userData)) {
         $logit->portalLog('login attempt', '', ($_POST['uname'] . ':not active patient'), '', '0');
         OpenEMR\Common\Session\SessionUtil::portalSessionCookieDestroy();
@@ -214,11 +219,7 @@ if ($userData = sqlQuery($sql, array(
                 )
             );
             $authorizedPortal = true;
-            $logit->portalLog(
-                'password update',
-                $auth['pid'],
-                ($_POST['login_uname'] . ': ' . $_SESSION['ptName'] . ':success')
-            );
+            $logit->portalLog('password update', $auth['pid'], ($_POST['login_uname'] . ': ' . $_SESSION['ptName'] . ':success'));
         }
     }
 

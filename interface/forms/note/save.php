@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Work/School Note Form save.php
  *
@@ -12,7 +13,7 @@
  */
 
 
-require_once("../../globals.php");
+require_once(__DIR__ . "/../../globals.php");
 require_once("$srcdir/api.inc");
 require_once("$srcdir/forms.inc");
 
@@ -38,7 +39,6 @@ if ($_GET["mode"] == "new") {
     $success = formUpdate($table_name, $_POST, $_GET["id"], $userauthorized);
 }
 
-$_SESSION["encounter"] = $encounter;
 formHeader("Redirecting....");
 formJump();
 formFooter();

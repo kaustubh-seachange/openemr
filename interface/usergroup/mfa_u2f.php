@@ -1,4 +1,5 @@
 <?php
+
 /**
  * FIDO U2F Support Module
  *
@@ -10,7 +11,6 @@
  * @copyright Copyright (c) 2018 Brady Miller <brady.g.miller@gmail.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE CNU General Public License 3
  */
-
 
 require_once('../globals.php');
 require_once("$srcdir/options.inc.php");
@@ -85,9 +85,7 @@ function docancel() {
     <div id="container_div" class="<?php echo $oemr_ui->oeContainer();?>">
         <div class="row">
             <div class="col-sm-12">
-                <div class="page-header">
-                    <?php echo $oemr_ui->pageHeading() . "\r\n"; ?>
-                </div>
+                <?php echo $oemr_ui->pageHeading() . "\r\n"; ?>
             </div>
         </div>
         <form method='post' action='mfa_u2f.php' onsubmit='return top.restoreSession()'>
@@ -136,8 +134,8 @@ function docancel() {
                 </fieldset>
                 <div class="form-group clearfix">
                 <div class="col-sm-12 text-left position-override">
-                        <button type="button" class="btn btn-default btn-save" value='<?php echo xla('Register'); ?>' onclick='doregister()'><?php echo xlt('Register'); ?></button>
-                        <button type="button" class="btn btn-link btn-cancel btn-separate-left" value="<?php echo xla('Cancel'); ?>" onclick="docancel()" ><?php echo xlt('Cancel'); ?></button>
+                        <button type="button" class="btn btn-secondary btn-save" value='<?php echo xla('Register'); ?>' onclick='doregister()'><?php echo xlt('Register'); ?></button>
+                        <button type="button" class="btn btn-link btn-cancel" value="<?php echo xla('Cancel'); ?>" onclick="docancel()" ><?php echo xlt('Cancel'); ?></button>
                     </div>
                 </div>
             </div>

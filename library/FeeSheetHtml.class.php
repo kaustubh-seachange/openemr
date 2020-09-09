@@ -1,4 +1,5 @@
 <?php
+
 /**
  * library/FeeSheetHtml.class.php
  *
@@ -11,7 +12,6 @@
  * @copyright Copyright (c) 2019 Brady Miller <brady.g.miller@gmail.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
-
 
 require_once(dirname(__FILE__) . "/FeeSheet.class.php");
 require_once(dirname(__FILE__) . "/api.inc");
@@ -76,14 +76,14 @@ class FeeSheetHtml extends FeeSheet
   //
     public static function genProviderSelect($tagname, $toptext, $default = 0, $disabled = false)
     {
-        $s = "   <select name='" . attr($tagname) . "'";
+        $s = "   <span class='form-inline'><select class='form-control' name='" . attr($tagname) . "'";
         if ($disabled) {
             $s .= " disabled";
         }
 
         $s .= ">";
         $s .= self::genProviderOptionList($toptext, $default);
-        $s .= "</select>\n";
+        $s .= "</select></span>\n";
         return $s;
     }
 
@@ -94,7 +94,7 @@ class FeeSheetHtml extends FeeSheet
         $s = '';
         if ($this->got_warehouses) {
             // Normally would use generate_select_list() but it's not flexible enough here.
-            $s .= "<select name='" . attr($tagname) . "'";
+            $s .= "<span class='form-inline'><select class='form-control' name='" . attr($tagname) . "'";
             if (!$disabled) {
                 $s .= " onchange='warehouse_changed(this);'";
             }
@@ -115,9 +115,11 @@ class FeeSheetHtml extends FeeSheet
                     }
                 } else {
                     $has_inventory = sellDrug($drug_id, 1, 0, 0, 0, 0, '', '', $lrow['option_id'], true);
-                    if (((strlen($default) == 0 && $lrow['is_default']) ||
-                       (strlen($default)  > 0 && $lrow['option_id'] == $default)) &&
-                      ($is_sold || $has_inventory)) {
+                    if (
+                        ((strlen($default) == 0 && $lrow['is_default']) ||
+                        (strlen($default)  > 0 && $lrow['option_id'] == $default)) &&
+                        ($is_sold || $has_inventory)
+                    ) {
                         $s .= " selected";
                     } else {
                         // Disable this warehouse option if not selected and has no inventory.
@@ -130,7 +132,7 @@ class FeeSheetHtml extends FeeSheet
                     $s .= ">" . text(xl_list_label($lrow['title'])) . "</option>\n";
             }
 
-            $s .= "</select>";
+            $s .= "</select></span>";
         }
 
         return $s;
@@ -142,7 +144,7 @@ class FeeSheetHtml extends FeeSheet
     public function genPriceLevelSelect($tagname, $toptext, $pr_id, $pr_selector = '', $default = '', $disabled = false)
     {
         // echo "<!-- pr_id = '$pr_id', pr_selector = '$pr_selector' -->\n"; // debugging
-        $s = "<select name='" . attr($tagname) . "'";
+        $s = "<span class='form-inline'><select class='form-control' name='" . attr($tagname) . "'";
         if (!$disabled) {
             $s .= " onchange='pricelevel_changed(this);'";
         }
@@ -184,8 +186,9 @@ class FeeSheetHtml extends FeeSheet
 
             $s .= "<option value='" . attr($lrow['option_id']) . "'";
             $s .= " id='prc_$price'";
-            if ((strlen($default) == 0 && $lrow['is_default'] && !$disabled) ||
-              (strlen($default)  > 0 && $lrow['option_id'] == $default)
+            if (
+                (strlen($default) == 0 && $lrow['is_default'] && !$disabled) ||
+                (strlen($default)  > 0 && $lrow['option_id'] == $default)
             ) {
                 $s .= " selected";
             }
@@ -193,7 +196,7 @@ class FeeSheetHtml extends FeeSheet
             $s .= ">" . text(xl_list_label($lrow['title'])) . "</option>\n";
         }
 
-        $s .= "</select>";
+        $s .= "</select></span>";
         return $s;
     }
 
@@ -221,11 +224,11 @@ class FeeSheetHtml extends FeeSheet
                     "ORDER BY fe.date DESC LIMIT 1";
                   $csrow = sqlQuery($query, array($this->pid));
                 if (empty($csrow)) {
-                    $s .= "<select name='$tagname'>\n";
+                    $s .= "<span class='form-inline'><select class='form-control' name='$tagname'>\n";
                     $s .= " <option value='2'>" . xlt('First Modern Contraceptive Use (Lifetime)') . "</option>\n";
                     $s .= " <option value='1'>" . xlt('First Modern Contraception at this Clinic (with Prior Contraceptive Use)') . "</option>\n";
                     $s .= " <option value='0'>" . xlt('Method Change at this Clinic') . "</option>\n";
-                    $s .= "</select>\n";
+                    $s .= "</select></span>\n";
                 }
             }
         }
@@ -237,7 +240,7 @@ class FeeSheetHtml extends FeeSheet
   //
     public function generatePriceLevelSelector($tagname = 'pricelevel', $disabled = false)
     {
-        $s = "<select name='" . attr($tagname) . "'";
+        $s = "<span class='form-inline'><select class='form-control' name='" . attr($tagname) . "'";
         if ($disabled) {
             $s .= " disabled";
         }
@@ -257,7 +260,7 @@ class FeeSheetHtml extends FeeSheet
             $s .= ">" . text(xl_list_label($val)) . "</option>";
         }
 
-        $s .= "</select>";
+        $s .= "</select></span>";
         return $s;
     }
 

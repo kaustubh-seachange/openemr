@@ -1,4 +1,5 @@
 <?php
+
 /**
  * interface/therapy_groups/therapy_groups_views/listGroups.php contains the group list view .
  *
@@ -14,102 +15,100 @@
  * @copyright Copyright (c) 2019 Brady Miller <brady.g.miller@gmail.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
+
+use OpenEMR\Common\Acl\AclMain;
+
 ?>
-<?php $edit = acl_check("groups", "gadd", false, 'write');?>
-<?php $view = acl_check("groups", "gadd", false, 'view');?>
+<?php $edit = AclMain::aclCheckCore("groups", "gadd", false, 'write');?>
+<?php $view = AclMain::aclCheckCore("groups", "gadd", false, 'view');?>
 
 
 <?php require 'header.php'; ?>
-<?php if ($view || $edit) :?>
-<span class="hidden title"><?php echo xlt('Therapy Group Finder');?></span>
+<?php if ($view || $edit) { ?>
 <div id="therapy_groups_list_container" class="container">
-
+  <div class="hidden title"><?php echo xlt('Therapy Group Finder');?></div>
     <!--------- ERRORS ----------->
-    <?php if ($deletion_try == 1 && $deletion_response['success'] == 0) :?>
-        <div class="row">
-            <div class="col-md-6 col-md-offset-3">
-                <div class="alert alert-danger text-center">
-                    <p class="failed_message"><?php echo xlt($deletion_response['message']);?></p>
-                </div>
-            </div>
+    <?php if ($deletion_try == 1 && $deletion_response['success'] == 0) { ?>
+        <div class="w-50 mx-auto">
+          <div class="alert alert-danger text-center">
+              <p class="failed_message"><?php echo xlt($deletion_response['message']);?></p>
+          </div>
         </div>
-    <?php endif ?>
+    <?php } ?>
 
     <!---------- FILTERS SECTION ------------->
-    <?php if ($edit) :?>
-    <button id="clear_filters" class="btn"><?php echo xlt("Clear Filters")?></button>
-    <?php endif;?>
+    <?php if ($edit) { ?>
+    <button id="clear_filters" class="btn btn-danger"><?php echo xlt("Clear Filters"); ?></button>
+  <?php } ?>
 
-    </br></br></br>
+    <br  /><br  /><br  />
     <div id="filters">
         <div class="row">
-            <div class=" form-group col-md-2">
-
-                    <label class="" for="group_name_filter"><?php echo xlt('Group Name');?>:</label>
-                    <input type="text" class="form-control" id="group_name_filter" placeholder="" >
+            <div class="form-group col-md">
+              <label for="group_name_filter"><?php echo xlt('Group Name');?>:</label>
+              <input type="text" class="form-control" id="group_name_filter"  />
             </div>
-            <div class=" form-group col-md-2">
-                <label class="" for="group_id_filter"><?php echo xlt('Group Id');?>:</label>
-                <input type="number" class="form-control" id="group_id_filter" placeholder="" >
+            <div class="form-group col-md">
+                <label for="group_id_filter"><?php echo xlt('Group Id');?>:</label>
+                <input type="number" class="form-control" id="group_id_filter"  />
             </div>
-            <div class=" form-group col-md-2">
-                <label class="" for="group_type_filter"><?php echo xlt('Group Type');?>:</label>
-                <select type="text" class="form-control" id="group_type_filter" placeholder="" >
+            <div class="form-group col-md">
+                <label for="group_type_filter"><?php echo xlt('Group Type');?>:</label>
+                <select type="text" class="form-control" id="group_type_filter">
                     <option value=""><?php echo xlt('choose');?></option>
-                    <?php foreach ($group_types as $type) :?>
+                    <?php foreach ($group_types as $type) { ?>
                         <option value="<?php echo attr($type);?>"><?php echo text($type) ;?></option>
-                    <?php endforeach; ?>
+                    <?php } ?>
                 </select>
             </div>
-            <div class=" form-group col-md-2">
-                <label class="" for="group_status_filter"><?php echo xlt('Status');?>:</label>
-                <select type="text" class="form-control" id="group_status_filter" placeholder="" >
+            <div class="form-group col-md">
+                <label for="group_status_filter"><?php echo xlt('Status');?>:</label>
+                <select class="form-control" id="group_status_filter">
                     <option value="<?php echo attr($statuses[10]); ?>"><?php echo xlt($statuses[10]);?></option>
-                    <?php foreach ($statuses as $status) :?>
-                        <?php if ($status != $statuses[10]) : ?>
+                    <?php foreach ($statuses as $status) {?>
+                        <?php if ($status != $statuses[10]) { ?>
                             <option value="<?php echo attr($status);?>"><?php echo xlt($status) ;?></option>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
+                        <?php } ?>
+                    <?php } ?>
                     <option value="all"><?php echo xlt("all");?></option>
                 </select>
             </div>
-            <div class=" form-group col-md-2">
-                <label class="" for="counselors_filter"><?php echo xlt('Main Counselors');?>:</label>
-                <select type="text" class="form-control" id="counselors_filter" placeholder="" >
+            <div class="form-group col-md">
+                <label for="counselors_filter"><?php echo xlt('Main Counselors');?>:</label>
+                <select class="form-control" id="counselors_filter">
                     <option value=""><?php echo xlt('choose');?></option>
-                    <?php foreach ($counselors as $counselor) :?>
+                    <?php foreach ($counselors as $counselor) { ?>
                         <option value="<?php echo attr($counselor);?>"><?php echo text($counselor) ;?></option>
-                    <?php endforeach; ?>
+                    <?php } ?>
                 </select>
             </div>
         </div>
         <div class="row">
-            <div class=" form-group col-md-2">
-                <label class="" for="group_from_start_date_filter"><?php echo xlt('Starting Date From');?>:</label>
-                <input type="text" class="form-control datepicker" id="group_from_start_date_filter" placeholder="" >
+            <div class="form-group col-md-3">
+                <label for="group_from_start_date_filter"><?php echo xlt('Starting Date From');?>:</label>
+                <input type="text" class="form-control datepicker" id="group_from_start_date_filter" />
             </div>
-            <div class=" form-group col-md-2">
-                <label class="" for="group_to_start_date_filter"><?php echo xlt('Starting Date To');?>:</label>
-                <input type="text" class="form-control datepicker" id="group_to_start_date_filter" placeholder="" >
+            <div class="form-group col-md-3">
+                <label for="group_to_start_date_filter"><?php echo xlt('Starting Date To');?>:</label>
+                <input type="text" class="form-control datepicker" id="group_to_start_date_filter" />
             </div>
-            <div class=" form-group col-md-2">
-                <label class="" for="group_from_end_date_filter"><?php echo xlt('End Date From');?>:</label>
-                <input type="text" class="form-control datepicker" id="group_from_end_date_filter" placeholder="" >
+            <div class="form-group col-md-3">
+                <label for="group_from_end_date_filter"><?php echo xlt('End Date From');?>:</label>
+                <input type="text" class="form-control datepicker" id="group_from_end_date_filter" />
             </div>
-            <div class=" form-group col-md-2">
-                <label class="" for="group_to_end_date_filter"><?php echo xlt('End Date To');?>:</label>
-                <input type="text" class="form-control datepicker" id="group_to_end_date_filter" placeholder="" >
+            <div class="form-group col-md-3">
+                <label for="group_to_end_date_filter"><?php echo xlt('End Date To');?>:</label>
+                <input type="text" class="form-control datepicker" id="group_to_end_date_filter" />
             </div>
 
         </div>
     </div>
     <!---------- END OF FILTERS SECTION ------------->
 
-    </br></br>
+    <br  /><br  />
 
     <!---------- TABLE SECTION -------------->
-    <div class="row">
-        <table  id="therapy_groups_list" class="dataTable display">
+        <table id="therapy_groups_list" class="dataTable display">
             <thead>
             <tr>
                 <th><?php echo xlt('Group Name'); ?></th>
@@ -124,7 +123,7 @@
             </tr>
             </thead>
             <tbody>
-            <?php foreach ($therapyGroups as $group) : ?>
+            <?php foreach ($therapyGroups as $group) { ?>
                 <tr>
                     <td><a href="<?php echo $GLOBALS['rootdir'] . '/therapy_groups/index.php?method=groupDetails&group_id=' . attr_url($group['group_id']); ?>"><?php echo text($group['group_name']);?></a></td>
                     <td><?php echo text($group['group_id']);?></td>
@@ -134,27 +133,26 @@
                     <td><?php echo ($group['group_end_date'] == '0000-00-00' or $group['group_end_date'] == '00-00-0000' or empty($group['group_end_date'])) ? '' : text(oeFormatShortDate($group['group_end_date'])); ?></td>
                     <td>
                         <?php foreach ($group['counselors'] as $counselor) {
-                            echo text($counselor) . " </br> ";
+                            echo text($counselor) . " <br  /> ";
                         } ;?>
                     </td>
                     <td><?php echo text($group['group_notes']);?></td>
-                    <td class="delete_btn">
+                    <td>
                         <?php
                         //Enable deletion only for groups that weren't yet deleted.
                         if ($group['group_status'] == 10) { ?>
                             <a href="<?php echo $GLOBALS['rootdir'] . '/therapy_groups/index.php?method=listGroups&deleteGroup=1&group_id=' . attr_url($group['group_id']); ?>"><?php
                             if ($edit) { ?>
-                                <button>X</button><?php
+                                <button class="btn btn-danger">&times;</button><?php
                             } ?>
                             </a></td><?php
                         } ?>
 
                     </td>
                 </tr>
-            <?php endforeach; ?>
+            <?php } ?>
             </tbody>
         </table>
-    </div>
     <!---------- END OF TABLE SECTION -------------->
 
 </div>
@@ -163,7 +161,7 @@
 
 
     /* ========= Initialise Data Table & Filters ========= */
-    $(function() {
+    $(function () {
 
 //        var lang = '<?php //echo $lang ?>//';//get language support for filters
 
@@ -183,13 +181,13 @@
             },
             ordering: false,
             <?php // Bring in the translations ?>
-            <?php $translationsDatatablesOverride = array('lengthMenu'=>(xla('Display').' _MENU_  '.xla('records per page')),
-                                                          'zeroRecords'=>(xla('Nothing found - sorry')),
-                                                          'info'=>(xla('Showing page') .' _PAGE_ '. xla('of') . ' _PAGES_'),
-                                                          'infoEmpty'=>(xla('No records available')),
-                                                          'infoFiltered'=>('('.xla('filtered from').' _MAX_ '.xla('total records').')'),
-                                                          'infoPostFix'=>(''),
-                                                          'url'=>('')); ?>
+            <?php $translationsDatatablesOverride = array('lengthMenu' => (xla('Display') . ' _MENU_  ' . xla('records per page')),
+                                                          'zeroRecords' => (xla('Nothing found - sorry')),
+                                                          'info' => (xla('Showing page') . ' _PAGE_ ' . xla('of') . ' _PAGES_'),
+                                                          'infoEmpty' => (xla('No records available')),
+                                                          'infoFiltered' => ('(' . xla('filtered from') . ' _MAX_ ' . xla('total records') . ')'),
+                                                          'infoPostFix' => (''),
+                                                          'url' => ('')); ?>
             <?php require($GLOBALS['srcdir'] . '/js/xl/datatables-net.js.php'); ?>
         });
 
@@ -413,15 +411,11 @@
 
 </script>
 
-    <?php require  'footer.php'; ?>
-<?php else :?>
+<?php } else { ?>
     <div class="container">
-
-        <div class="row alert alert-info">
-            <h1 class="col-md-12"><i class="col-md-3 glyphicon glyphicon-alert"></i><span class="col-md-6"><?php echo xlt("access not allowed");?></span></h1>
+        <div class="alert alert-info">
+          <h1 class="row"><span class="col-md-3"><i class="fas fa-exclamation-triangle"></i></span><span class="col-md-6"><?php echo xlt("access not allowed");?></span></h1>
         </div>
     </div>
-
-
-
-<?php endif;?>
+<?php } ?>
+<?php require 'footer.php'; ?>

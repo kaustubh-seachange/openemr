@@ -1,4 +1,5 @@
 <?php
+
 /**
  * interface/super/rules/controllers/edit/template/criteria.php
  *
@@ -16,29 +17,28 @@ use OpenEMR\Core\Header;
 ?>
 <html>
 <head>
+    <!-- TODO: Why no bootstrap here????? !-->
     <?php Header::setupHeader(['no_bootstrap', 'no_fontawesome', 'no_textformat', 'no_dialog']); ?>
 
-    <link rel="stylesheet" href="<?php css_src('rules.css') ?>" type="text/css">
+    <link rel="stylesheet" href="<?php css_src('rules.css') ?>">
 </head>
 
 <body class='body_top'>
 <?php $rule = $viewBean->rule ?>
 <?php $criteria = $viewBean->criteria ?>
 
-<script language="javascript" src="<?php js_src('edit.js') ?>"></script>
-<script type="text/javascript">
+<script src="<?php js_src('edit.js') ?>"></script>
+<script>
     var edit = new rule_edit( {});
     edit.init();
 </script>
 
-<table class="header">
+<table class="table header">
   <tr>
         <td class="title"><?php echo xlt('Rule Edit'); ?></td>
         <td>
-            <a href="index.php?action=detail!view&id=<?php echo attr_url($rule->id); ?>" class="iframe_medium css_button" onclick="top.restoreSession()">
-                <span><?php echo xlt('Cancel'); ?></span>
-            </a>
-            <a href="javascript:;" class="iframe_medium css_button" id="btn_save" onclick="top.restoreSession()"><span><?php echo xlt('Save'); ?></span></a>
+            <a href="index.php?action=detail!view&id=<?php echo attr_url($rule->id); ?>" class="iframe_medium btn btn-secondary" onclick="top.restoreSession()"><?php echo xlt('Cancel'); ?></a>
+            <a href="javascript:;" class="iframe_medium btn btn-primary" id="btn_save" onclick="top.restoreSession()"><span><?php echo xlt('Save'); ?></span></a>
         </td>
   </tr>
 </table>

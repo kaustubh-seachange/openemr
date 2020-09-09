@@ -1,4 +1,5 @@
 <?php
+
 /**
  * LBF form.
  *
@@ -13,15 +14,14 @@
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-
-require_once("../../globals.php");
-require_once("$srcdir/acl.inc");
+require_once(__DIR__ . "/../../globals.php");
 require_once("$srcdir/options.inc.php");
 require_once("$srcdir/patient.inc");
 require_once("$srcdir/encounter.inc");
 require_once($GLOBALS['fileroot'] . '/custom/code_types.inc.php');
 
 use Mpdf\Mpdf;
+use OpenEMR\Common\Acl\AclMain;
 
 // Font size in points for table cell data.
 $FONTSIZE = 9;
@@ -74,8 +74,8 @@ if ($lobj['grp_diags'   ]) {
 if (!empty($lobj['aco_spec'])) {
     $LBF_ACO = explode('|', $lobj['aco_spec']);
 }
-if (!acl_check('admin', 'super') && !empty($LBF_ACO)) {
-    if (!acl_check($LBF_ACO[0], $LBF_ACO[1])) {
+if (!AclMain::aclCheckCore('admin', 'super') && !empty($LBF_ACO)) {
+    if (!AclMain::aclCheckCore($LBF_ACO[0], $LBF_ACO[1])) {
         die(xlt('Access denied'));
     }
 }
@@ -108,12 +108,12 @@ if ($PDF_OUTPUT) {
     $pdf = new mPDF($config_mpdf);
     $pdf->SetHTMLHeader('
 		<div style="text-align: right; font-weight: bold;">
-			'.$patientname.' DOB: '.oeFormatShortDate($patientdob["DOB"]).' DOS: '. oeFormatShortDate($dateofservice) .'
+			' . $patientname . ' DOB: ' . oeFormatShortDate($patientdob["DOB"]) . ' DOS: ' . oeFormatShortDate($dateofservice) . '
 		</div>');
     $pdf->SetHTMLFooter('
-			<div style="float: right; width:33% text-align: left;">'.oeFormatDateTime(date("Y-m-d H:i:s")).'</div>
+			<div style="float: right; width:33% text-align: left;">' . oeFormatDateTime(date("Y-m-d H:i:s")) . '</div>
 			<div style="float: right; width:33%; text-align: center; ">{PAGENO}/{nbpg}</div>
-			<div style="float: right; width:33%; text-align: right; ">'.$patientname.'</div>
+			<div style="float: right; width:33%; text-align: right; ">' . $patientname . '</div>
 			');
     $pdf->SetDisplayMode('real');
     if ($_SESSION['language_direction'] == 'rtl') {
@@ -334,8 +334,10 @@ function getContent()
         if ($i === false) {
             break;
         }
-        if (substr($content, $i+6, $wrlen) === $web_root &&
-            substr($content, $i+6, $wsrlen) !== $webserver_root) {
+        if (
+            substr($content, $i + 6, $wrlen) === $web_root &&
+            substr($content, $i + 6, $wsrlen) !== $webserver_root
+        ) {
             $content = substr($content, 0, $i + 6) . $webserver_root . substr($content, $i + 6 + $wrlen);
         }
     }
@@ -447,7 +449,7 @@ while ($frow = sqlFetchArray($fres)) {
         }
         if (isOption($edit_options, 'RS')) {
             echo " <tr class='RS'>";
-        } else if (isOption($edit_options, 'RO')) {
+        } elseif (isOption($edit_options, 'RO')) {
             echo " <tr class='RO'>";
         } else {
             echo " <tr>";
@@ -492,7 +494,7 @@ while ($frow = sqlFetchArray($fres)) {
         end_cell();
         if (isOption($edit_options, 'DS')) {
             echo "<td colspan='" . attr($datacols) . "' class='dcols" . attr($datacols) . " stuff under RS' style='";
-        } else if (isOption($edit_options, 'DO')) {
+        } elseif (isOption($edit_options, 'DO')) {
             echo "<td colspan='" . attr($datacols) . "' class='dcols" . attr($datacols) . " stuff under RO' style='";
         } else {
             echo "<td colspan='" . attr($datacols) . "' class='dcols" . attr($datacols) . " stuff under' style='";
@@ -622,7 +624,7 @@ if ($PDF_OUTPUT) {
     $pdf->Output('form.pdf', 'I'); // D = Download, I = Inline
 } else {
     ?>
-<script language='JavaScript'>
+<script>
  var win = top.printLogPrint ? top : opener.top;
  win.printLogPrint(window);
 </script>

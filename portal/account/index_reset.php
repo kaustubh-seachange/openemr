@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Credential Changes
  *
@@ -10,6 +11,7 @@
  * @copyright Copyright (c) 2019 Brady Miller <brady.g.miller@gmail.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
+
 $ignoreAuth_onsite_portal_two = $ignoreAuth = 0;
 // Will start the (patient) portal OpenEMR session/cookie.
 require_once(dirname(__FILE__) . "/../../src/Common/Session/SessionUtil.php");
@@ -94,7 +96,7 @@ if (isset($_POST['submit'])) {
         echo "<script>dlgclose();</script>\n";
     }
     ?>
-    <script type="text/javascript">
+    <script>
         function checkUserName() {
             let vacct = document.getElementById('uname').value;
             let vsuname = document.getElementById('login_uname').value;
@@ -140,13 +142,13 @@ if (isset($_POST['submit'])) {
     </style>
 </head>
 <body>
-    <br><br>
+    <br /><br />
     <div class="container">
         <form action="" method="POST" onsubmit="return process_new_pass()">
             <input style="display:none" type="text" name="dummyuname" />
             <input style="display:none" type="password" name="dummypassword" />
             <input type="hidden" name="csrf_token_form" value="<?php echo attr(CsrfUtils::collectCsrfToken("portal_index_reset")); ?>" />
-            <table class="table table-condensed" style="border-bottom:0px;width:100%">
+            <table class="table table-sm" style="border-bottom:0px;width:100%">
                 <tr>
                     <td width="35%"><strong><?php echo xlt('Account Name'); ?><strong></td>
                     <td><input class="form-control" name="uname" id="uname" type="text" readonly
@@ -194,7 +196,7 @@ if (isset($_POST['submit'])) {
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="2"><br><input class="btn btn-primary pull-right" type="submit" name="submit" value="<?php echo xla('Save'); ?>" /></td>
+                    <td colspan="2"><br /><input class="btn btn-primary float-right" type="submit" name="submit" value="<?php echo xla('Save'); ?>" /></td>
                 </tr>
             </table>
             <div><strong><?php echo '* ' . xlt("All credential fields are case sensitive!") ?></strong></div>

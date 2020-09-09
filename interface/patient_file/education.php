@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This is called as a pop-up to display patient education materials.
  *
@@ -10,7 +11,6 @@
  * @copyright Copyright (c) 2017-2018 Brady Miller <brady.g.miller@gmail.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
-
 
 require_once("../globals.php");
 require_once("$srcdir/options.inc.php");
@@ -40,15 +40,15 @@ if ($_POST['bn_submit']) {
         $url .= '?mainSearchCriteria.v.cs=';
         if ('ICD9'   == $codetype) {
             $url .= '2.16.840.1.113883.6.103';
-        } else if ('ICD10'  == $codetype) {
+        } elseif ('ICD10'  == $codetype) {
             $url .= '2.16.840.1.113883.6.90' ;
-        } else if ('SNOMED' == $codetype) {
+        } elseif ('SNOMED' == $codetype) {
             $url .= '2.16.840.1.113883.6.96' ;
-        } else if ('RXCUI'  == $codetype) {
+        } elseif ('RXCUI'  == $codetype) {
             $url .= '2.16.840.1.113883.6.88' ;
-        } else if ('NDC'    == $codetype) {
+        } elseif ('NDC'    == $codetype) {
             $url .= '2.16.840.1.113883.6.69' ;
-        } else if ('LOINC'  == $codetype) {
+        } elseif ('LOINC'  == $codetype) {
             $url .= '2.16.840.1.113883.6.1'  ;
         } else {
             die(xlt('Code type not recognized') . ': ' . text($codetype));
@@ -69,7 +69,7 @@ if ($_POST['bn_submit']) {
         } else { // Removed opener because this is not a dialog. sjp 12/14/17
             echo "<html><body>"
             //."<script type=\"text/javascript\" src=\"". $webroot ."/interface/main/tabs/js/include_opener.js\"></script>"
-            . "<script language='JavaScript'>\n";
+            . "<script>\n";
             echo "document.location.href = " . js_escape($url) . ";\n";
             echo "</script></body></html>\n";
         }
@@ -111,51 +111,49 @@ if ($_POST['bn_submit']) {
     <?php Header::setupHeader(); ?>
 
 </head>
-<body class="body_top">
-    <div class="container">
+<body>
+    <div class="container mt-3">
         <div class="row">
-            <div class="col-xs-12">
-                <div class="page-header">
-                    <h3>
-                        <?php
-                        echo xlt('Educational materials for');
-                        echo ' ' . text($codetype) . ' ';
-                        echo xlt('code');
-                        echo ' "' . text($codevalue) . '"';
-                        if ($language) {
-                            echo ' ' . xlt('with preferred language') . ' ' .
-                            text(getListItemTitle('language', $_REQUEST['language']));
-                        }
-                        ?>
-                    </h3>
+            <div class="col-12">
+                <h3>
                     <?php
-                    if ($errmsg) {
-                        echo "<p style='color:red'>" . text($errmsg) . "</p>\n";
+                    echo xlt('Educational materials for');
+                    echo ' ' . text($codetype) . ' ';
+                    echo xlt('code');
+                    echo ' "' . text($codevalue) . '"';
+                    if ($language) {
+                        echo ' ' . xlt('with preferred language') . ' ' .
+                        text(getListItemTitle('language', $_REQUEST['language']));
                     }
                     ?>
-                </div>
+                </h3>
+                <?php
+                if ($errmsg) {
+                    echo "<p class='text-danger'>" . text($errmsg) . "</p>\n";
+                }
+                ?>
             </div>
         </div>
         <div class='row'>
-            <div class='col-xs-12'>
+            <div class='col-12'>
                 <form method='post' action='education.php' onsubmit='return top.restoreSession()'>
                     <input type="hidden" name="csrf_token_form" value="<?php echo attr(CsrfUtils::collectCsrfToken()); ?>" />
-                    <input type='hidden' name='type'     value='<?php echo attr($codetype); ?>' />
-                    <input type='hidden' name='code'     value='<?php echo attr($codevalue); ?>' />
+                    <input type='hidden' name='type' value='<?php echo attr($codetype); ?>' />
+                    <input type='hidden' name='code' value='<?php echo attr($codevalue); ?>' />
                     <input type='hidden' name='language' value='<?php echo attr($language); ?>' />
                     <div class='form-group'>
                         <label for="source"><?php echo xlt('Select source'); ?></label>
                         <select name='source' id='source' class='form-control'>
-                            <option value='MLP'  ><?php echo xlt('MedlinePlus Connect'); ?></option>
+                            <option value='MLP'><?php echo xlt('MedlinePlus Connect'); ?></option>
                             <option value='Local'><?php echo xlt('Local Content'); ?></option>
                         </select>
                     </div>
                     <div class='form-group'>
                         <div class='btn-group' role='group'>
-                            <button type='submit' class='btn btn-default btn-search' name='bn_submit' value='bn_submit'>
+                            <button type='submit' class='btn btn-primary btn-search' name='bn_submit' value='bn_submit'>
                                 <?php echo xlt('Submit'); ?>
                             </button>
-                            <button type='button' class='btn btn-link btn-cancel' onclick='window.close()'>
+                            <button type='button' class='btn btn-secondary btn-cancel' onclick='window.close()'>
                                 <?php echo xlt('Cancel'); ?>
                             </button>
                         </div>

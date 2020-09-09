@@ -12,15 +12,15 @@
 
 
 {literal}
- <style type="text/css" title="mystyles" media="all">
+ <style>
 <!--
 td {
 	font-size:12pt;
 	font-family:helvetica;
 }
 .small {
-	font-size:9pt;
-	font-family:helvetica;
+	font-size: 9pt;
+	font-family: "Helvetica", sans-serif;
 	text-decoration: none;
 }
 .small:hover {
@@ -28,17 +28,17 @@ td {
 }
 li{
 	font-size:11pt;
-	font-family:helvetica;
+	font-family: "Helvetica", sans-serif;
 	margin-left: 15px;
 }
 a {
 	font-size:11pt;
-	font-family:helvetica;
+	font-family: "Helvetica", sans-serif;
 }
 -->
 </style>
 {/literal}
-<link rel="stylesheet" href="{$GLOBALS.css_header}" type="text/css">
+<link rel="stylesheet" href="{$GLOBALS.css_header}">
 </head>
 <body class="body_top">
 <form name="patientfinder" method="post" action="{$FORM_ACTION}" onsubmit="return top.restoreSession()">

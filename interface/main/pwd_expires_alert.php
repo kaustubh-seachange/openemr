@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Display a message indicating that the user's password has/will expire.
  *
@@ -10,7 +11,6 @@
  * @copyright Copyright (c) 2018-2019 Brady Miller <brady.g.miller@gmail.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
-
 
 require_once("../globals.php");
 
@@ -46,21 +46,19 @@ if (strtotime($current_date) > strtotime($pwd_expires)) {
 
 <html>
 <head>
-    <?php Header::setupHeader(["jquery-ui","jquery-ui-darkness"]); ?>
+    <?php Header::setupHeader(); ?>
     <title><?php echo xlt('Password Expiration'); ?></title>
 </head>
 <body class="body_top">
 <div class="container">
     <div class="row">
         <div class="col-sm-12">
-            <div class="page-header">
-                <div class="alert alert-danger" role="alert"><?php echo text($msg_alert);?></div>
-            </div>
+            <div class="alert alert-danger" role="alert"><?php echo text($msg_alert);?></div>
         </div>
     </div>
     <div class="row">
         <div class="col-sm-12">
-            <a href="../usergroup/user_info.php" class="btn btn-default btn-transmit" onclick="top.restoreSession()"><?php echo xlt("Change Password");?></a>
+            <a href="../usergroup/user_info.php" class="btn btn-secondary btn-transmit" onclick="top.restoreSession()"><?php echo xlt("Change Password");?></a>
         </div>
     </div>
 </div>

@@ -1,10 +1,12 @@
-<?php echo "<!-- footer -->\n"; ?>
+<?php
+
+echo "<!-- footer -->\n"; ?>
 <div class="container">
-    <hr>
+    <hr id="footer-hr" />
     <footer>
-        <p class="muted">
-            <small><?php echo xlt('Onsite Patient Portal'); ?> Rel v5.0.2 Copyright &copy; <?php echo date('Y'); ?> By
-                sjpadgett@gmail.com
+        <p class="muted text-sm-center">
+            <small><?php echo xlt('Patient Portal') . " v" . $GLOBALS['openemr_version']; ?> Copyright &copy; <?php echo date('Y'); ?> By
+                sjpadgett@gmail.com License GPLv3
             </small>
         </p>
     </footer>

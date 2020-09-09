@@ -1,4 +1,5 @@
 <?php
+
 /**
  * The outside frame that holds all of the OpenEMR User Interface.
  *
@@ -13,12 +14,14 @@
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-/* Include our required headers */
+// Set $sessionAllowWrite to true to prevent session concurrency issues during authorization and app setup related code
+$sessionAllowWrite = true;
 require_once('../globals.php');
 
 use OpenEMR\Common\Auth\AuthUtils;
 use OpenEMR\Common\Crypto\CryptoGen;
 use OpenEMR\Common\Csrf\CsrfUtils;
+use OpenEMR\Common\Session\SessionTracker;
 use OpenEMR\Common\Utils\RandomGenUtils;
 use OpenEMR\Core\Header;
 use OpenEMR\Services\FacilityService;
@@ -89,7 +92,7 @@ function input_focus()
 {
     ?>
     <script>
-        $(function() {
+        $(function () {
                 $('#totp').focus();
         });
     </script>
@@ -109,6 +112,12 @@ function generate_html_middle()
     posted_to_hidden('languageChoice');
     posted_to_hidden('authUser');
     posted_to_hidden('clearPass');
+    // to be safe, remove clearPass from memory now
+    if (function_exists('sodium_memzero')) {
+        sodium_memzero($_POST["clearPass"]);
+    } else {
+        $_POST["clearPass"] = '';
+    }
 }
 
 require_once(dirname(__FILE__) . "/../../src/Common/Session/SessionUtil.php");
@@ -264,9 +273,7 @@ if (isset($_POST['new_login_session_management'])) {
                 echo '<div class="container">';
                 echo '<div class="row">';
                 echo '    <div class="col-sm-12">';
-                echo '        <div class="page-header">';
-                echo '            <h2>' . xlt('TOTP Verification') . '</h2>';
-                echo '        </div>';
+                echo '        <h2>' . xlt('TOTP Verification') . '</h2>';
                 echo '    </div>';
                 echo '</div>';
                 if ($errormsg && $errortype == "TOTP") {
@@ -279,7 +286,7 @@ if (isset($_POST['new_login_session_management'])) {
                 echo '              <fieldset>';
                 echo '                  <legend>' . xlt('Provide TOTP code') . '</legend>';
                 echo '                  <div class="form-group">';
-                echo '                      <div class="col-sm-6 col-sm-offset-3">';
+                echo '                      <div class="col-sm-6 offset-sm-3">';
                 echo '                          <label for="totp">' . xlt('Enter the code from your authentication application on your device') . ':</label>';
                 echo '                          <input type="text" name="totp" class="form-control input-lg" id="totp" maxlength="12" required>';
                 echo '                          <input type="hidden" name="form_response" value="true" />';
@@ -288,7 +295,7 @@ if (isset($_POST['new_login_session_management'])) {
                 echo '              </fieldset>';
                 echo '                  <div class="form-group clearfix">';
                 echo '                      <div class="col-sm-12 text-left position-override">';
-                echo '                          <button type="submit" class="btn btn-default btn-save">' . xlt('Authenticate TOTP') . '</button>';
+                echo '                          <button type="submit" class="btn btn-secondary btn-save">' . xlt('Authenticate TOTP') . '</button>';
                 echo '                  </div>';
                 echo '              </div>';
                 echo '          </div>';
@@ -308,9 +315,7 @@ if (isset($_POST['new_login_session_management'])) {
                 echo '<div class="container">';
                 echo '<div class="row">';
                 echo '    <div class="col-sm-12">';
-                echo '        <div class="page-header">';
-                echo '            <h2>' . xlt('U2F Key Verification') . '</h2>';
-                echo '        </div>';
+                echo '        <h2>' . xlt('U2F Key Verification') . '</h2>';
                 echo '    </div>';
                 echo '</div>';
                 if ($errormsg && $errortype == "U2F") {
@@ -322,7 +327,7 @@ if (isset($_POST['new_login_session_management'])) {
                 echo '              <fieldset>';
                 echo '                  <legend>' . xlt('Insert U2F Key') . '</legend>';
                 echo '                  <div class="form-group">';
-                echo '                      <div class="col-sm-6 col-sm-offset-3">';
+                echo '                      <div class="col-sm-6 offset-sm-3">';
                 echo '                          <ul>';
                 echo '                              <li>' . xlt('Insert your key into a USB port and click the Authenticate button below.') . '</li>';
                 echo '                              <li>' . xlt('Then press the flashing button on your key within 1 minute.') . '</li>';
@@ -331,7 +336,7 @@ if (isset($_POST['new_login_session_management'])) {
                 echo '              </fieldset>';
                 echo '                  <div class="form-group clearfix">';
                 echo '                      <div class="col-sm-12 text-left position-override">';
-                echo '                          <button type="button"  id="authutf" class="btn btn-default btn-save" onclick="doAuth()">' . xlt('Authenticate U2F') . '</button>';
+                echo '                          <button type="button"  id="authutf" class="btn btn-secondary btn-save" onclick="doAuth()">' . xlt('Authenticate U2F') . '</button>';
                 echo '                          <input type="hidden" name="form_requests" value="' . attr($requests) . '" />';
                 echo '                          <input type="hidden" name="form_response" value="" />';
                 generate_html_middle();
@@ -359,6 +364,12 @@ if (isset($_POST['new_login_session_management'])) {
 
     // This is a new login, so create a new session id and remove the old session
     session_regenerate_id(true);
+    // Also need to delete clearPass from memory
+    if (function_exists('sodium_memzero')) {
+        sodium_memzero($_POST["clearPass"]);
+    } else {
+        $_POST["clearPass"] = '';
+    }
 } else {
     // This is not a new login, so check csrf and then create a new session id and do NOT remove the old session
     if (!CsrfUtils::verifyCsrfToken($_POST["csrf_token_form"])) {
@@ -370,6 +381,9 @@ if (isset($_POST['new_login_session_management'])) {
 //  Note this key always remains private and never leaves server session. It is used to create
 //  the csrf tokens.
 CsrfUtils::setupCsrfKey();
+// Set up the session uuid. This will be used for mapping session setting to database.
+//  At this time only used for lastupdate tracking
+SessionTracker::setupSessionDatabaseTracker();
 
 $_SESSION["encounter"] = '';
 
@@ -389,7 +403,7 @@ if ($GLOBALS['login_into_facility']) {
 }
 
 // Fetch the password expiration date (note LDAP skips this)
-$is_expired=false;
+$is_expired = false;
 if ((!AuthUtils::useActiveDirectory()) && ($GLOBALS['password_expiration_days'] != 0) && (check_integer($GLOBALS['password_expiration_days']))) {
     $result = privQuery("select `last_update_password` from `users_secure` where `id` = ?", [$_SESSION['authUserID']]);
     $current_date = date('Y-m-d');
@@ -405,7 +419,7 @@ if ((!AuthUtils::useActiveDirectory()) && ($GLOBALS['password_expiration_days'] 
 
     if (empty(strtotime($pwd_alert_date))) {
         error_log("OpenEMR ERROR: there is a problem when trying to check if user's password is expired");
-    } else if (strtotime($current_date) >= strtotime($pwd_alert_date)) {
+    } elseif (strtotime($current_date) >= strtotime($pwd_alert_date)) {
         $is_expired = true;
     }
 }
@@ -414,17 +428,20 @@ if ($is_expired) {
     //display the php file containing the password expiration message.
     $frame1url = "pwd_expires_alert.php?csrf_token_form=" . attr_url(CsrfUtils::collectCsrfToken());
     $frame1target = "adm";
+    $frame1label = "";
 } elseif (!empty($_POST['patientID'])) {
     $patientID = 0 + $_POST['patientID'];
     if (empty($_POST['encounterID'])) {
         // Open patient summary screen (without a specific encounter)
         $frame1url = "../patient_file/summary/demographics.php?set_pid=" . attr_url($patientID);
         $frame1target = "pat";
+        $frame1label = xl('Patient Search/Add Screen');
     } else {
         // Open patient summary screen with a specific encounter
         $encounterID = 0 + $_POST['encounterID'];
         $frame1url = "../patient_file/summary/demographics.php?set_pid=" . attr_url($patientID) . "&set_encounterid=" . attr_url($encounterID);
         $frame1target = "pat";
+        $frame1label = xl('Patient Search/Add Screen');
     }
 } elseif (isset($_GET['mode']) && $_GET['mode'] == "loadcalendar") {
     $frame1url = "calendar/index.php?pid=" . attr_url($_GET['pid']);
@@ -433,18 +450,30 @@ if ($is_expired) {
     }
 
     $frame1target = "cal";
+    $frame1label = xl('Calendar Screen');
 } else {
     // standard layout
     $map_paths_to_targets = array(
-        'main_info.php' => ('cal'),
-        '../new/new.php' => ('pat'),
-        '../../interface/main/finder/dynamic_finder.php' => ('fin'),
-        '../../interface/patient_tracker/patient_tracker.php?skip_timeout_reset=1' => ('flb'),
-        '../../interface/main/messages/messages.php?form_active=1' => ('msg')
+        'main_info.php' => array(
+            'target' => 'cal' , "label" => xl('Calendar Screen')
+        ),
+        '../new/new.php' => array(
+            'target' => 'pat' , "label" => xl('Patient Search/Add Screen')
+        ),
+        '../../interface/main/finder/dynamic_finder.php' => array(
+            'target' => 'fin' , "label" => xl('Patient Finder Screen')
+        ),
+        '../../interface/patient_tracker/patient_tracker.php?skip_timeout_reset=1' => array(
+            'target' => 'flb' , "label" => xl('Patient Flow Board')
+        ),
+        '../../interface/main/messages/messages.php?form_active=1' => array(
+            'target' => 'msg' , "label" => xl('Messages Screen')
+        )
     );
     if ($GLOBALS['default_top_pane']) {
-        $frame1url=attr($GLOBALS['default_top_pane']);
-        $frame1target = $map_paths_to_targets[$GLOBALS['default_top_pane']];
+        $frame1url = attr($GLOBALS['default_top_pane']);
+        $frame1target = $map_paths_to_targets[$GLOBALS['default_top_pane']]['target'];
+        $frame1label = $map_paths_to_targets[$GLOBALS['default_top_pane']]['label'];
         if (empty($frame1target)) {
             $frame1target = "msc";
         }
@@ -453,14 +482,16 @@ if ($is_expired) {
         $frame1target = "cal";
     }
     if ($GLOBALS['default_second_tab']) {
-        $frame2url=attr($GLOBALS['default_second_tab']);
-        $frame2target = $map_paths_to_targets[$GLOBALS['default_second_tab']];
+        $frame2url = attr($GLOBALS['default_second_tab']);
+        $frame2target = $map_paths_to_targets[$GLOBALS['default_second_tab']]['target'];
+        $frame2label = $map_paths_to_targets[$GLOBALS['default_second_tab']]['label'];
         if (empty($frame2target)) {
             $frame2target = "msc";
         }
     } else {
-        $frame2url = "../../interface/main/messages/messages.php?form_active=1";
-        $frame2target = "msg";
+        // In the case where no second default tab is specified, set these session variables to null
+        $frame2url = null;
+        $frame2target = null;
     }
 }
 
@@ -472,8 +503,10 @@ if (!empty($GLOBALS['gbl_nav_area_width'])) {
 // Will set Session variables to communicate settings to tab layout
 $_SESSION['frame1url'] = $frame1url;
 $_SESSION['frame1target'] = $frame1target;
+$_SESSION['frame1label'] = $frame1label;
 $_SESSION['frame2url'] = $frame2url;
 $_SESSION['frame2target'] = $frame2target;
+$_SESSION['frame2label'] = $frame2label;
 // mdsupport - Apps processing invoked for valid app selections from list
 if ((isset($_POST['appChoice'])) && ($_POST['appChoice'] !== '*OpenEMR')) {
     $_SESSION['app1'] = $_POST['appChoice'];

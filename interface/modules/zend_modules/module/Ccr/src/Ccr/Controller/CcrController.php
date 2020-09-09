@@ -1,4 +1,5 @@
 <?php
+
 /**
  * interface/modules/zend_modules/module/Ccr/src/Ccr/Controller/CcrController.php
  *
@@ -9,11 +10,12 @@
  * @copyright Copyright (c) 2014 Z&H Consultancy Services Private Limited <sam@zhservices.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
+
 namespace Ccr\Controller;
 
-use Zend\Mvc\Controller\AbstractActionController;
-use Zend\View\Model\ViewModel;
-use Zend\View\Model\JsonModel;
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
+use Laminas\View\Model\JsonModel;
 use Application\Listener\Listener;
 use Documents\Controller\DocumentsController;
 use Ccr\Model\CcrTable;
@@ -27,7 +29,7 @@ class CcrController extends AbstractActionController
     public function __construct(CcrTable $ccrTable, DocumentsController $documentsController)
     {
         $this->ccrTable = $ccrTable;
-        $this->listenerObject   = new Listener;
+        $this->listenerObject   = new Listener();
         $this->documentsController = $documentsController;
     }
 
@@ -259,10 +261,10 @@ class CcrController extends AbstractActionController
 
         if ($request->getPost('setval') == 'approve') {
             $this->getCcrTable()->insertApprovedData($_REQUEST);
-            return $this->redirect()->toRoute('ccr', array('action'=>'index'));
+            return $this->redirect()->toRoute('ccr', array('action' => 'index'));
         } elseif ($request->getPost('setval') == 'discard') {
             $this->getCcrTable()->discardCCRData(array('audit_master_id' => $audit_master_id));
-            return $this->redirect()->toRoute('ccr', array('action'=>'index'));
+            return $this->redirect()->toRoute('ccr', array('action' => 'index'));
         }
 
         $demographics       = $this->getCcrTable()->getDemographics(array('audit_master_id' => $audit_master_id));

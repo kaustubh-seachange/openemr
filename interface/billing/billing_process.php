@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Billing process Program
  *
@@ -10,10 +11,10 @@
  * @author    Terry Hill <terry@lilysystems.com>
  * @author    Jerry Padgett <sjpadgett@gmail.com>
  * @author    Stephen Waite <stephen.waite@cmsvt.com>
- * @copyright Copyright (c) 2014-2019 Brady Miller <brady.g.miller@gmail.com>
+ * @copyright Copyright (c) 2014-2020 Brady Miller <brady.g.miller@gmail.com>
  * @copyright Copyright (c) 2016 Terry Hill <terry@lillysystems.com>
- * @copyright Copyright (c) 2017-2019 Jerry Padgett <sjpadgett@gmail.com>
- * @copyright Copyright (c) 2018-2019 Stephen Waite <stephen.waite@cmsvt.com>
+ * @copyright Copyright (c) 2017-2020 Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2018-2020 Stephen Waite <stephen.waite@cmsvt.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
@@ -21,10 +22,12 @@ require_once("../globals.php");
 require_once("$srcdir/patient.inc");
 
 use OpenEMR\Billing\BillingUtilities;
-use OpenEMR\Billing\HCFA_1500;
-use OpenEMR\Billing\X12_5010_837P;
+use OpenEMR\Billing\Hcfa1500;
+use OpenEMR\Billing\X125010837I;
+use OpenEMR\Billing\X125010837P;
 use OpenEMR\Common\Crypto\CryptoGen;
 use OpenEMR\Common\Csrf\CsrfUtils;
+use OpenEMR\Core\Header;
 
 if (!CsrfUtils::verifyCsrfToken($_POST["csrf_token_form"])) {
     CsrfUtils::csrfNotVerified();
@@ -85,7 +88,7 @@ function append_claim(&$segs)
             }
             continue;
         } elseif (!$bat_content) {
-            die("Error:<br>\nInput must begin with 'ISA'; " . "found '" . text($elems[0]) . "' instead");
+            die("Error:<br />\nInput must begin with 'ISA'; " . "found '" . text($elems[0]) . "' instead");
         }
         if ($elems[0] == 'GS') {
             if ($bat_gscount == 0) {
@@ -107,7 +110,7 @@ function append_claim(&$segs)
         }
 
         if ($elems[0] == 'BHT') {
-            // needle is set in OpenEMR\Billing\X12_5010_837P
+            // needle is set in OpenEMR\Billing\X125010837P
             $bat_content .= substr_replace($seg, '*' . $bat_icn . $bat_st_02 . '*', strpos($seg, '*0123*'), 6);
             $bat_content .= "~";
             continue;
@@ -175,8 +178,10 @@ function process_form($ar)
     // Set up crypto object
     $cryptoGen = new CryptoGen();
 
-    if (isset($ar['bn_x12']) || isset($ar['bn_x12_encounter']) || isset($ar['bn_process_hcfa']) || isset($ar['bn_hcfa_txt_file']) || isset($ar['bn_process_hcfa_form'])
-        || isset($ar['bn_process_ub04_form']) || isset($ar['bn_process_ub04']) || isset($ar['bn_ub04_x12'])) {
+    if (
+        isset($ar['bn_x12']) || isset($ar['bn_x12_encounter']) || isset($ar['bn_process_hcfa']) || isset($ar['bn_hcfa_txt_file']) || isset($ar['bn_process_hcfa_form'])
+        || isset($ar['bn_process_ub04_form']) || isset($ar['bn_process_ub04']) || isset($ar['bn_ub04_x12'])
+    ) {
         if ($GLOBALS['billing_log_option'] == 1) {
             if (file_exists($GLOBALS['OE_SITE_DIR'] . "/documents/edi/process_bills.log")) {
                 $hlog = file_get_contents($GLOBALS['OE_SITE_DIR'] . "/documents/edi/process_bills.log");
@@ -239,17 +244,17 @@ function process_form($ar)
                     $tmp = BillingUtilities::updateClaim(true, $patient_id, $encounter, $payer_id, $payer_type, 2); // $sql .= " billed = 1, ";
                 }
                 if (isset($ar['bn_x12']) || isset($ar['bn_x12_encounter']) && !$clear_claim) {
-                    $tmp = BillingUtilities::updateClaim(true, $patient_id, $encounter, $payer_id, $payer_type, 1, 1, '', $target, $claim_array['partner']);
+                    $tmp = BillingUtilities::updateClaim(true, $patient_id, $encounter, $payer_id, $payer_type, 2, 1, '', $target, $claim_array['partner']);
                 } elseif (isset($ar['bn_ub04_x12'])) {
                     $ub04id = get_ub04_array($patient_id, $encounter);
                     $ub_save = json_encode($ub04id);
-                    $tmp = BillingUtilities::updateClaim(true, $patient_id, $encounter, $payer_id, $payer_type, 1, 1, '', $target, $claim_array['partner'] . '-837I', 0, $ub_save);
+                    $tmp = BillingUtilities::updateClaim(true, $patient_id, $encounter, $payer_id, $payer_type, 2, 1, '', $target, $claim_array['partner'] . '-837I', 0, $ub_save);
                 } elseif (isset($ar['bn_process_ub04_form']) || isset($ar['bn_process_ub04'])) {
                     $ub04id = get_ub04_array($patient_id, $encounter);
                     $ub_save = json_encode($ub04id);
-                    $tmp = BillingUtilities::updateClaim(true, $patient_id, $encounter, $payer_id, $payer_type, 1, 1, '', 'ub04', -1, 0, $ub_save);
+                    $tmp = BillingUtilities::updateClaim(true, $patient_id, $encounter, $payer_id, $payer_type, 2, 1, '', 'ub04', -1, 0, $ub_save);
                 } elseif (isset($ar['bn_process_hcfa']) || isset($ar['bn_hcfa_txt_file']) || isset($ar['bn_process_hcfa_form']) && !$clear_claim) {
-                    $tmp = BillingUtilities::updateClaim(true, $patient_id, $encounter, $payer_id, $payer_type, 1, 1, '', 'hcfa');
+                    $tmp = BillingUtilities::updateClaim(true, $patient_id, $encounter, $payer_id, $payer_type, 2, 1, '', 'hcfa');
                 } elseif (isset($ar['bn_mark'])) {
                     // $sql .= " billed = 1, ";
                     $tmp = BillingUtilities::updateClaim(true, $patient_id, $encounter, $payer_id, $payer_type, 2);
@@ -282,7 +287,7 @@ function process_form($ar)
                     $bill_info[] = xl("Claim ") . $claimid . xl(" has been re-opened.") . "\n";
                 } elseif (isset($ar['bn_x12']) || isset($ar['bn_x12_encounter'])) {
                     $log = '';
-                    $segs = explode("~\n", X12_5010_837P::gen_x12_837($patient_id, $encounter, $log, isset($ar['bn_x12_encounter'])));
+                    $segs = explode("~\n", X125010837P::genX12837P($patient_id, $encounter, $log, isset($ar['bn_x12_encounter'])));
                     $hlog .= $log;
                     append_claim($segs);
                     if ($validatePass) {
@@ -294,7 +299,7 @@ function process_form($ar)
                     }
                 } elseif (isset($ar['bn_ub04_x12'])) {
                     $log = '';
-                    $segs = explode("~\n", generate_x12_837I($patient_id, $encounter, $log, $ub04id));
+                    $segs = explode("~\n", X125010837I::generateX12837I($patient_id, $encounter, $log, $ub04id));
                     $hlog .= $log;
                     append_claim($segs);
                     if ($validatePass) {
@@ -306,8 +311,8 @@ function process_form($ar)
                     }
                 } elseif (isset($ar['bn_process_hcfa'])) {
                     $log = '';
-                    $hcfa = new HCFA_1500();
-                    $lines = $hcfa->gen_hcfa_1500($patient_id, $encounter, $log);
+                    $hcfa = new Hcfa1500();
+                    $lines = $hcfa->genHcfa1500($patient_id, $encounter, $log);
                     $hlog .= $log;
                     $alines = explode("\014", $lines); // form feeds may separate pages
                     foreach ($alines as $tmplines) {
@@ -329,8 +334,8 @@ function process_form($ar)
                     }
                 } elseif (isset($ar['bn_process_hcfa_form'])) {
                     $log = '';
-                    $hcfa = new HCFA_1500();
-                    $lines = $hcfa->gen_hcfa_1500($patient_id, $encounter, $log);
+                    $hcfa = new Hcfa1500();
+                    $lines = $hcfa->genHcfa1500($patient_id, $encounter, $log);
                     $hcfa_image = $GLOBALS['images_static_absolute'] . "/cms1500.png";
                     $hlog .= $log;
                     $alines = explode("\014", $lines); // form feeds may separate pages
@@ -366,8 +371,8 @@ function process_form($ar)
                     }
                 } elseif (isset($ar['bn_hcfa_txt_file'])) {
                     $log = '';
-                    $hcfa = new HCFA_1500();
-                    $lines = $hcfa->gen_hcfa_1500($patient_id, $encounter, $log);
+                    $hcfa = new Hcfa1500();
+                    $lines = $hcfa->genHcfa1500($patient_id, $encounter, $log);
                     $hlog .= $log;
                     $bat_content .= $lines;
                     if ($validatePass) {
@@ -495,9 +500,7 @@ function process_form($ar)
 ?>
 <html>
 <head>
-    <link rel="stylesheet" href="<?php echo $css_header; ?>" type="text/css">
-    <script type="text/javascript"
-        src="<?php echo $GLOBALS['assets_static_relative']; ?>/jquery/dist/jquery.min.js"></script>
+    <?php Header::setupHeader(); ?>
     <script>
         $(function () {
             $("#close-link").click(function () {
@@ -507,7 +510,7 @@ function process_form($ar)
     </script>
 </head>
 <body class="body_top">
-    <br>
+    <br />
     <p>
     <h3><?php echo xlt('Billing queue results'); ?>:</h3><a href="#" id="close-link"><?php echo xlt('Close'); ?></a>
     <ul>

@@ -1,4 +1,6 @@
-<?php // File: $Id$
+<?php
+
+// File: $Id$
 // ----------------------------------------------------------------------
 // POST-NUKE Content Management System
 // Copyright (C) 2001 by the Post-Nuke Development Team.
@@ -35,6 +37,7 @@
  *
  * $const _PNH_KEEPOUTPUT Keep the output from method calls
  */
+
 define('_PNH_KEEPOUTPUT', 0);
 
 /**
@@ -281,7 +284,7 @@ class pnHTML
      */
     function GetOutput()
     {
-        return implode("\n", $this->header)."\n".$this->output;
+        return implode("\n", $this->header) . "\n" . $this->output;
     }
 
     /**
@@ -321,7 +324,7 @@ class pnHTML
     {
         ob_start();
         include 'header.php';
-        print '<table width="100%" border="0" cellpadding="0" cellspacing="0"><tr><td align="left" valign="top">';
+        print '<table class="w-100 border-0" cellpadding="0" cellspacing="0"><tr><td class="text-left align-top">';
 
         $output = ob_get_contents();
         @ob_end_clean();
@@ -401,7 +404,7 @@ class pnHTML
     function Linebreak($numbreaks = 1)
     {
         $out = '';
-        for ($i=0; $i<$numbreaks; $i++) {
+        for ($i = 0; $i < $numbreaks; $i++) {
             $out .= '<br />';
         }
 
@@ -428,10 +431,10 @@ class pnHTML
     function FormStart($action)
     {
         $output = '<form'
-            .' action="'.pnVarPrepForDisplay($action).'"'
-            .' method="post"'
-            .' enctype="'.((empty($this->fileupload)) ? 'application/x-www-form-urlencoded' : 'multipart/form-data').'"'
-            .'>'
+            . ' action="' . pnVarPrepForDisplay($action) . '"'
+            . ' method="post"'
+            . ' enctype="' . ((empty($this->fileupload)) ? 'application/x-www-form-urlencoded' : 'multipart/form-data') . '"'
+            . '>'
         ;
         if ($this->GetOutputMode() == _PNH_RETURNOUTPUT) {
             return $output;
@@ -471,13 +474,13 @@ class pnHTML
     function FormSubmit($label = 'Submit', $accesskey = '')
     {
         $this->tabindex++;
-        $output = '<input'
-            .' type="submit"'
-            .' value="'.pnVarPrepForDisplay($label).'"'
-            .' align="middle"'
-            .((empty($accesskey)) ? '' : ' accesskey="'.pnVarPrepForDisplay($accesskey).'"')
-            .' tabindex="'.$this->tabindex.'"'
-            .' />'
+        $output = '<input class="btn btn-primary"'
+            . ' type="submit"'
+            . ' value="' . pnVarPrepForDisplay($label) . '"'
+            . ' align="middle"'
+            . ((empty($accesskey)) ? '' : ' accesskey="' . pnVarPrepForDisplay($accesskey) . '"')
+            . ' tabindex="' . $this->tabindex . '"'
+            . ' />'
         ;
         if ($this->GetOutputMode() == _PNH_RETURNOUTPUT) {
             return $output;
@@ -506,20 +509,20 @@ class pnHTML
             $output = '';
             foreach ($fieldname as $n => $v) {
                 $output .= '<input'
-                    .' type="hidden"'
-                    .' name="'.pnVarPrepForDisplay($n).'"'
-                    .' id="'.pnVarPrepForDisplay($n).'"'
-                    .' value="'.pnVarPrepForDisplay($v).'"'
-                    .'/>'
+                    . ' type="hidden"'
+                    . ' name="' . pnVarPrepForDisplay($n) . '"'
+                    . ' id="' . pnVarPrepForDisplay($n) . '"'
+                    . ' value="' . pnVarPrepForDisplay($v) . '"'
+                    . '/>'
                 ;
             }
         } else {
             $output = '<input'
-                .' type="hidden"'
-                .' name="'.pnVarPrepForDisplay($fieldname).'"'
-                .' id="'.pnVarPrepForDisplay($fieldname).'"'
-                .' value="'.pnVarPrepForDisplay($value).'"'
-                .' />'
+                . ' type="hidden"'
+                . ' name="' . pnVarPrepForDisplay($fieldname) . '"'
+                . ' id="' . pnVarPrepForDisplay($fieldname) . '"'
+                . ' value="' . pnVarPrepForDisplay($value) . '"'
+                . ' />'
             ;
         }
 
@@ -571,7 +574,7 @@ class pnHTML
 
         // Set up selected if required
         if (!empty($selected)) {
-            for ($i=0; !empty($data[$i]); $i++) {
+            for ($i = 0; !empty($data[$i]); $i++) {
                 if ($data[$i]['id'] == $selected) {
                     $data[$i]['selected'] = 1;
                 }
@@ -583,23 +586,23 @@ class pnHTML
             $size = $c;
         }
 
-        $output = '<select'
-            .' name="'.pnVarPrepForDisplay($fieldname).'"'
-            .' id="'.pnVarPrepForDisplay($fieldname).'"'
-            .' size="'.pnVarPrepForDisplay($size).'"'
-            .(($multiple == 1) ? ' multiple="multiple"' : '')
-            .((empty($accesskey)) ? '' : ' accesskey="'.pnVarPrepForDisplay($accesskey).'"')
-            .' tabindex="'.$this->tabindex.'"'
-            .' ' . $disable_text
-            .'>'
+        $output = '<select class="form-control"'
+            . ' name="' . pnVarPrepForDisplay($fieldname) . '"'
+            . ' id="' . pnVarPrepForDisplay($fieldname) . '"'
+            . ' size="' . pnVarPrepForDisplay($size) . '"'
+            . (($multiple == 1) ? ' multiple="multiple"' : '')
+            . ((empty($accesskey)) ? '' : ' accesskey="' . pnVarPrepForDisplay($accesskey) . '"')
+            . ' tabindex="' . $this->tabindex . '"'
+            . ' ' . $disable_text
+            . '>'
         ;
         foreach ($data as $datum) {
             $output .= '<option'
-                .' value="'.pnVarPrepForDisplay($datum['id']).'"'
-                .((empty($datum['selected'])) ? '' : ' selected="selected"')
-                .'>'
-                .pnVarPrepForDisplay($datum['name'])
-                .'</option>'
+                . ' value="' . pnVarPrepForDisplay($datum['id']) . '"'
+                . ((empty($datum['selected'])) ? '' : ' selected="selected"')
+                . '>'
+                . pnVarPrepForDisplay($datum['name'])
+                . '</option>'
             ;
         }
 

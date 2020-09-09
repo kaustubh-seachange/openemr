@@ -263,7 +263,7 @@ foreach ($providers as $provider) {
     echo "<div id='bigCalText'>";
     // output the provider name
     echo "<span id='provname'>" . text($provider['fname']) . " " . text($provider['lname']) . "</span>";
-    echo "<br>";
+    echo "<br />";
     // output the date range
     $atmp = array_keys($A_EVENTS);
     echo "<span id='daterange'>";
@@ -419,9 +419,9 @@ foreach ($providers as $provider) {
                 // some sort of patient appointment
 
                 $content .= text($displayTime). " ";
-                if ($catid == 1) $content .= "<strike>";
+                if ($catid == 1) $content .= "<s>";
                 $content .= text($lname);
-                if ($catid == 1) $content .= "</strike>";
+                if ($catid == 1) $content .= "</s>";
             }
 
             echo "<div class='" . attr($evtClass) . "' style='background-color:" . attr($event['catcolor']) . ";'>";
@@ -518,8 +518,8 @@ function PrintDatePicker($caldate, $DOWlist, $daynames) {
 
 </body>
 
-<script language='JavaScript'>
-$(function (){
+<script>
+$(function () {
     var win = top.printLogPrint ? top : opener.top;
     win.printLogPrint(window);
 });

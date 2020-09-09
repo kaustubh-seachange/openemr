@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Script for the globals editor.
  *
@@ -7,20 +8,20 @@
  * @author    Rod Roark <rod@sunsetsystems.com>
  * @author    Brady Miller <brady.g.miller@gmail.com>
  * @author    Ranganath Pathak <pathak@scrs1.org>
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
  * @copyright Copyright (c) 2010 Rod Roark <rod@sunsetsystems.com>
  * @copyright Copyright (c) 2016-2019 Brady Miller <brady.g.miller@gmail.com>
  * @copyright Copyright (c) 2019 Ranganath Pathak <pathak@scrs1.org>
+ * @copyright Copyright (c) 2020 Jerry Padgett <sjpadgett@gmail.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-
 require_once("../globals.php");
 require_once("../../custom/code_types.inc.php");
-require_once("$srcdir/acl.inc");
 require_once("$srcdir/globals.inc.php");
 require_once("$srcdir/user.inc");
-require_once(dirname(__FILE__)."/../../myportal/soap_service/portal_connectivity.php");
 
+use OpenEMR\Common\Acl\AclMain;
 use OpenEMR\Common\Crypto\CryptoGen;
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Common\Logging\EventAuditLogger;
@@ -35,7 +36,7 @@ $userMode = (array_key_exists('mode', $_GET) && $_GET['mode'] == 'user');
 
 if (!$userMode) {
   // Check authorization.
-    $thisauth = acl_check('admin', 'super');
+    $thisauth = AclMain::aclCheckCore('admin', 'super');
     if (!$thisauth) {
         die(xlt('Not authorized'));
     }
@@ -62,13 +63,12 @@ function checkCreateCDB()
 
         $couch = new CouchDB();
         if (!$couch->check_connection()) {
-            echo "<script type='text/javascript'>alert(" . xlj("CouchDB Connection Failed.") . ");</script>";
+            echo "<script>alert(" . xlj("CouchDB Connection Failed.") . ");</script>";
             return false;
         }
 
         if ($GLOBALS['couchdb_host'] || $GLOBALS['couchdb_port'] || $GLOBALS['couchdb_dbase']) {
-            $couch->createDB($GLOBALS['couchdb_dbase']);
-            $couch->createView($GLOBALS['couchdb_dbase']);
+            $couch->createDB();
         }
     }
 
@@ -133,7 +133,7 @@ if (array_key_exists('form_save', $_POST) && $_POST['form_save'] && $userMode) {
             foreach ($grparr as $fldid => $fldarr) {
                 if (in_array($fldid, $USER_SPECIFIC_GLOBALS)) {
                     list($fldname, $fldtype, $flddef, $flddesc) = $fldarr;
-                    $label = "global:".$fldid;
+                    $label = "global:" . $fldid;
                     if ($fldtype == "encrypted") {
                         if (empty(trim($_POST["form_$i"]))) {
                             $fldvalue = '';
@@ -154,7 +154,7 @@ if (array_key_exists('form_save', $_POST) && $_POST['form_save'] && $userMode) {
         }
     }
 
-    echo "<script type='text/javascript'>";
+    echo "<script>";
     echo "if (parent.left_nav.location) {";
     echo "  parent.left_nav.location.reload();";
     echo "  parent.Title.location.reload();";
@@ -166,50 +166,6 @@ if (array_key_exists('form_save', $_POST) && $_POST['form_save'] && $userMode) {
     echo "}";
     echo "self.location.href='edit_globals.php?mode=user&unique=yes';";
     echo "</script>";
-}
-
-if (array_key_exists('form_download', $_POST) && $_POST['form_download']) {
-    //verify csrf
-    if (!CsrfUtils::verifyCsrfToken($_POST["csrf_token_form"])) {
-        CsrfUtils::csrfNotVerified();
-    }
-
-    $client = portal_connection();
-    try {
-        $response = $client->getPortalConnectionFiles($credentials);
-    } catch (SoapFault $e) {
-        error_log('SoapFault Error');
-        error_log(errorLogEscape(var_dump(get_object_vars($e))));
-    } catch (Exception $e) {
-        error_log('Exception Error');
-        error_log(errorLogEscape(var_dump(get_object_vars($e))));
-    }
-
-    if (array_key_exists('status', $response) && $response['status'] == "1") {//WEBSERVICE RETURNED VALUE SUCCESSFULLY
-        $tmpfilename  = realpath(sys_get_temp_dir())."/".date('YmdHis').".zip";
-        $fp           = fopen($tmpfilename, "wb");
-        fwrite($fp, base64_decode($response['value']));
-        fclose($fp);
-        $practice_filename    = $response['file_name'];//practicename.zip
-        ob_clean();
-        // Set headers
-        header("Cache-Control: public");
-        header("Content-Description: File Transfer");
-        header("Content-Disposition: attachment; filename=".$practice_filename);
-        header("Content-Type: application/zip");
-        header("Content-Transfer-Encoding: binary");
-        // Read the file from disk
-        readfile($tmpfilename);
-        unlink($tmpfilename);
-        exit;
-    } else {//WEBSERVICE CALL FAILED AND RETURNED AN ERROR MESSAGE
-        ob_end_clean();
-        ?>
-      <script type="text/javascript">
-        alert(<?php echo xlj('Offsite Portal web Service Failed') ?> + ":\\n" + <?php echo js_escape($response['value']); ?>);
-    </script>
-        <?php
-    }
 }
 ?>
 
@@ -265,7 +221,7 @@ if (array_key_exists('form_save', $_POST) && $_POST['form_save'] && !$userMode) 
                     $fldvalue = "";
                 }
 
-                if ($fldtype=='pwd') {
+                if ($fldtype == 'pwd') {
                     $fldvalue = $fldvalue ? SHA1($fldvalue) : $fldvalueold; // TODO: salted passwords?
                 }
 
@@ -279,9 +235,10 @@ if (array_key_exists('form_save', $_POST) && $_POST['form_save'] && !$userMode) 
 
                 // We rely on the fact that set of keys in globals.inc === set of keys in `globals`  table!
 
-                if (!isset($old_globals[$fldid]) // if the key not found in database - update database
+                if (
+                    !isset($old_globals[$fldid]) // if the key not found in database - update database
                     ||
-                   ( isset($old_globals[$fldid]) && $old_globals[ $fldid ]['gl_value'] !== $fldvalue ) // if the value in database is different
+                    ( isset($old_globals[$fldid]) && $old_globals[ $fldid ]['gl_value'] !== $fldvalue ) // if the value in database is different
                 ) {
                     // special treatment for some vars
                     switch ($fldid) {
@@ -319,7 +276,7 @@ if (array_key_exists('form_save', $_POST) && $_POST['form_save'] && !$userMode) 
         EventAuditLogger::instance()->auditSQLAuditTamper('gbl_force_log_breakglass', $forceBreakglassLogStatusFieldNew);
     }
 
-    echo "<script type='text/javascript'>";
+    echo "<script>";
     echo "if (parent.left_nav.location) {";
     echo "  parent.left_nav.location.reload();";
     echo "  parent.Title.location.reload();";
@@ -342,44 +299,24 @@ if (array_key_exists('form_save', $_POST) && $_POST['form_save'] && !$userMode) 
 
 <?php Header::setupHeader(['common','jscolor']); ?>
 
-<script type="text/javascript">
-function validate_file() {
-    $.ajax({
-        type: "POST",
-        url: "<?php echo $GLOBALS['webroot']?>/library/ajax/offsite_portal_ajax.php",
-        data: {
-            csrf_token_form: <?php echo js_escape(CsrfUtils::collectCsrfToken()); ?>,
-            action: 'check_file'
-        },
-        cache: false,
-        success: function(message) {
-            if (message == 'OK') {
-                document.getElementById('form_download').value = 1;
-                document.getElementById('file_error_message').innerHTML = '';
-                document.forms[0].submit();
-            } else {
-                document.getElementById('form_download').value = 0;
-                document.getElementById('file_error_message').innerHTML = message;
-                return false;
-            }
-        }
-    });
-}
-</script>
 <style>
 #oe-nav-ul.tabNav {
     display: flex !important;
     flex-flow: column !important;
 }
+
 #oe-nav-ul.tabNav.tabWidthFull {
     width: 10%;
 }
+
 #oe-nav-ul.tabNav.tabWidthUser {
     width: 12%;
 }
+
 #oe-nav-ul.tabNav.tabWidthWide {
     width: 15%;
 }
+
 #oe-nav-ul.tabNav.tabWidthVertical {
     width: 25%;
 }
@@ -405,16 +342,13 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
 ?>
 </head>
 
-<?php if ($userMode) { ?>
-    <body class="body_top" style="min-width: 700px; margin:0 !important">
-<?php } else { ?>
-    <div class="body_top" style="margin:0 !important">
-<?php } ?>
+<body class="body_top m-0" <?php if ($userMode) {
+    echo 'style="min-width: 700px;"'; } ?>>
 
     <div id="container_div" class="<?php echo $oemr_ui->oeContainer();?>">
         <div class="row">
              <div class="col-sm-12">
-                <div class="page-header">
+                <div class="mt-3">
                     <?php echo $oemr_ui->pageHeading() . "\r\n"; ?>
                 </div>
             </div>
@@ -429,7 +363,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                     <input type="hidden" name="csrf_token_form" value="<?php echo attr(CsrfUtils::collectCsrfToken()); ?>" />
                     <div class="clearfix">
                         <div class="btn-group oe-margin-b-10">
-                            <button type='submit' class='btn btn-default btn-save oe-pull-toward' name='form_save' value='<?php echo xla('Save'); ?>'><?php echo xlt('Save'); ?></button>
+                            <button type='submit' class='btn btn-secondary btn-save oe-pull-toward' name='form_save' value='<?php echo xla('Save'); ?>'><?php echo xlt('Save'); ?></button>
                         </div>
                         <div class="input-group col-sm-4 oe-pull-away">
                         <?php // mdsupport - Optional server based searching mechanism for large number of fields on this screen.
@@ -439,13 +373,13 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                             $placeholder = xla('Search user settings');
                         }
                         ?>
-                          <input name='srch_desc' id='srch_desc' class='form-control' type='text' placeholder='<?php echo $placeholder; ?>' value='<?php echo (!empty($_POST['srch_desc']) ? attr($_POST['srch_desc']) : '') ?>' />
-                        <span class="input-group-btn">
-                            <button class="btn btn-default btn-search" type='submit' id='globals_form_search' name='form_search'><?php echo xlt('Search'); ?></button>
+                        <input name='srch_desc' id='srch_desc' class='form-control' type='text' placeholder='<?php echo $placeholder; ?>' value='<?php echo (!empty($_POST['srch_desc']) ? attr($_POST['srch_desc']) : '') ?>' />
+                        <span class="input-group-append">
+                            <button class="btn btn-secondary btn-search" type='submit' id='globals_form_search' name='form_search'><?php echo xlt('Search'); ?></button>
                         </span>
                         </div><!-- /input-group -->
                     </div>
-                    <br>
+                    <br />
                     <div id="globals-div">
                         <ul class="tabNav tabWidthWide" id="oe-nav-ul">
                         <?php
@@ -466,19 +400,18 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                             $srch_item = 0;
                             foreach ($GLOBALS_METADATA as $grpname => $grparr) {
                                 if (!$userMode || in_array($grpname, $USER_SPECIFIC_TABS)) {
-                                    echo " <div class='tab" . ($i ? "" : " current") .
-                                      "' style='height:auto;width:100%;font-size:0.9em'>\n";
+                                    echo " <div class='tab w-100 h-auto" . ($i ? "" : " current") . "' style='font-size: 0.9rem'>\n";
 
                                     echo "<div class=''>";
-                                    $addendum = $grpname == 'Appearance' ? ' (*'. xl("need to logout/login after changing these settings") .')' : '';
-                                    echo "<div class='col-sm-12 oe-global-tab-heading'><div class='oe-pull-toward' style='font-size: 1.4em'>". xlt($grpname) ." &nbsp;</div><div style='margin-top: 5px'>" . text($addendum) ."</div></div>";
+                                    $addendum = $grpname == 'Appearance' ? ' (*' . xl("need to logout/login after changing these settings") . ')' : '';
+                                    echo "<div class='col-sm-12 oe-global-tab-heading'><div class='oe-pull-toward' style='font-size: 1.4rem'>" . xlt($grpname) . " &nbsp;</div><div style='margin-top: 5px'>" . text($addendum) . "</div></div>";
                                     echo "<div class='clearfix'></div>";
                                     if ($userMode) {
                                         echo "<div class='row'>";
                                         echo "<div class='col-sm-4'>&nbsp</div>";
-                                        echo "<div class='col-sm-4'><b>" . xlt('User Specific Setting') . "</b></div>";
-                                        echo "<div class='col-sm-2'><b>" . xlt('Default Setting') . "</b></div>";
-                                        echo "<div class='col-sm-2 '><b>" . xlt('Default') . "</b></div>";
+                                        echo "<div class='col-sm-4 font-weight-bold'>" . xlt('User Specific Setting') . "</div>";
+                                        echo "<div class='col-sm-2 font-weight-bold'>" . xlt('Default Setting') . "</div>";
+                                        echo "<div class='col-sm-2 font-weight-bold'>" . xlt('Default') . "</div>";
                                         echo "</div>";
                                     }
 
@@ -487,10 +420,12 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                             list($fldname, $fldtype, $flddef, $flddesc) = $fldarr;
                                             // mdsupport - Check for matches
                                             $srch_cl = '';
+                                            $highlight_search = false;
 
-                                            if (!empty($_POST['srch_desc']) && (stristr(($fldname.$flddesc), $_POST['srch_desc']) !== false)) {
+                                            if (!empty($_POST['srch_desc']) && (stristr(($fldname . $flddesc), $_POST['srch_desc']) !== false)) {
                                                 $srch_cl = ' srch';
                                                 $srch_item++;
+                                                $highlight_search = true;
                                             }
 
                                             // Most parameters will have a single value, but some will be arrays.
@@ -509,7 +444,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                             $userSetting = "";
                                             $settingDefault = "checked='checked'";
                                             if ($userMode) {
-                                                    $userSettingArray = sqlQuery("SELECT * FROM user_settings WHERE setting_user=? AND setting_label=?", array($_SESSION['authUserID'],"global:".$fldid));
+                                                    $userSettingArray = sqlQuery("SELECT * FROM user_settings WHERE setting_user=? AND setting_label=?", array($_SESSION['authUserID'],"global:" . $fldid));
                                                     $userSetting = $userSettingArray['setting_value'];
                                                     $globalValue = $fldvalue;
                                                 if (!empty($userSettingArray)) {
@@ -519,9 +454,9 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                             }
 
                                             if ($userMode) {
-                                                echo " <div class='row form-group" . $srch_cl  . "'><div class='col-sm-4 control-label'><b>" . text($fldname) . "</b></div><div class='col-sm-4 oe-input'  title='" . attr($flddesc) ."'>\n";
+                                                echo " <div class='row form-group" . $srch_cl  . "'><div class='col-sm-4 font-weight-bold'>" . ($highlight_search ? '<mark>' : '') . text($fldname) . ($highlight_search ? '</mark>' : '') . "</div><div class='col-sm-4 oe-input' title='" . attr($flddesc) . "'>\n";
                                             } else {
-                                                echo " <div class='row form-group" . $srch_cl . "'><div class='col-sm-6 control-label'><b>" . text($fldname) . "</b></div><div class='col-sm-6 oe-input'  title='" . attr($flddesc) ."'>\n";
+                                                echo " <div class='row form-group" . $srch_cl . "'><div class='col-sm-6 font-weight-bold'>" . ($highlight_search ? '<mark>' : '') . text($fldname) . ($highlight_search ? '</mark>' : '') . "</div><div class='col-sm-6 oe-input' title='" . attr($flddesc) . "'>\n";
                                             }
 
                                             if (is_array($fldtype)) {
@@ -593,7 +528,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                                     // this is used when value has not yet been encrypted (only happens once when upgrading)
                                                     $fldvalueDecrypted = $fldvalue;
                                                 }
-                                                echo "  <input type='text' class='form-control' name='form_$i' id='form_$i' " .
+                                                echo "  <input type='password' class='form-control' name='form_$i' id='form_$i' " .
                                                     "maxlength='255' value='" . attr($fldvalueDecrypted) . "' />\n";
                                                 if ($userMode) {
                                                     if (empty($globalValue)) {
@@ -672,9 +607,9 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                                 }
                                                 echo "  <input type='text' class='form-control jscolor {hash:true}' name='form_$i' id='form_$i' " .
                                                 "maxlength='15' value='" . attr($fldvalue) . "' />" .
-                                                "<input type='button' value='" . xla('Default'). "' onclick=\"document.forms[0].form_$i.jscolor.fromString(" . attr_js($flddef) . ")\">\n";
+                                                "<input type='button' value='" . xla('Default') . "' onclick=\"document.forms[0].form_$i.jscolor.fromString(" . attr_js($flddef) . ")\">\n";
                                             } elseif ($fldtype == 'default_visit_category') {
-                                                $sql = "SELECT pc_catid, pc_catname, pc_cattype 
+                                                $sql = "SELECT pc_catid, pc_catname, pc_cattype
                                                 FROM openemr_postcalendar_categories
                                                 WHERE pc_active = 1 ORDER BY pc_seq";
                                                 $result = sqlStatement($sql);
@@ -712,12 +647,15 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                                         // Only show files that contain tabs_style_ or style_ as options
                                                         if ($fldtype == 'tabs_css') {
                                                             $patternStyle = 'tabs_style_';
-                                                        } else { // $fldtype == 'css'
+                                                        } else {
+                                                            // $fldtype == 'css'
                                                             $patternStyle = 'style_';
                                                         }
-                                                        if ($tfname == 'style_blue.css' ||
+                                                        if (
+                                                            $tfname == 'style_blue.css' ||
                                                             $tfname == 'style_pdf.css' ||
-                                                            !preg_match("/^" . $patternStyle . ".*\.css$/", $tfname)) {
+                                                            !preg_match("/^" . $patternStyle . ".*\.css$/", $tfname)
+                                                        ) {
                                                             continue;
                                                         }
 
@@ -793,20 +731,12 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                             }
                                             ++$i;
                                         }
-
-                                        if (trim(strtolower($fldid)) == 'portal_offsite_address_patient_link' && !empty($GLOBALS['portal_offsite_enable']) && !empty($GLOBALS['portal_offsite_providerid'])) {
-                                            echo "<div class='row'>";
-                                            echo "<div class='col-sm-12'>";
-                                            echo "<input type='hidden' name='form_download' id='form_download'>";
-                                            echo "<button onclick=\"return validate_file()\" type='button'>" . xlt('Download Offsite Portal Connection Files') . "</button>";
-                                            echo "<div id='file_error_message' class='alert alert-error'></div>";
-                                            echo "</div>";
-                                            echo "</div>";
-                                        }
                                     }
 
-                                    echo "<div><div class='oe-pull-away oe-margin-t-10' style=''>". xlt($grpname) ." &nbsp;<i class='fa fa-lg fa-arrow-circle-up oe-help-redirect scroll' aria-hidden='true'></i></div><div class='clearfix'></div></div>";
-                                    echo " </div>\n";
+                                    echo "<div class='btn-group oe-margin-b-10'>" .
+                                        "<button type='submit' class='btn btn-secondary btn-save oe-pull-toward' name='form_save'" .
+                                        "value='" . xla('Save') . "'>" . xlt('Save') . "</button></div>";
+                                    echo "<div class='oe-pull-away oe-margin-t-10' style=''>" . xlt($grpname) . " &nbsp;<a href='#' class='text-dark text-decoration-none fa fa-lg fa-arrow-circle-up oe-help-redirect scroll' aria-hidden='true'></a></div><div class='clearfix'></div></div>";
                                     echo " </div>\n";
                                 }
                             }
@@ -819,16 +749,15 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
     </div><!--End of container div-->
 <?php $oemr_ui->oeBelowContainerDiv();?>
 </div>
-</body>
 <?php
 $post_srch_desc = $_POST['srch_desc'];
 if (!empty($post_srch_desc) && $srch_item == 0) {
-    echo "<script>alert(" . js_escape($post_srch_desc." - ".xl('search term was not found, please try another search')) . ");</script>";
+    echo "<script>alert(" . js_escape($post_srch_desc . " - " . xl('search term was not found, please try another search')) . ");</script>";
 }
 ?>
 
-<script language="JavaScript">
-$(function() {
+<script>
+$(function () {
     tabbify();
     <?php // mdsupport - Highlight search results ?>
     $('.srch div.control-label').wrapInner("<mark></mark>");
@@ -853,49 +782,6 @@ $(function() {
     }
     ?>
 });
-</script>
-<script>
-var userMode = <?php echo json_encode($userMode); ?>;
-$(window).on('resize', function() {
-    var win = $(this);
-    var winWidth = $(this).width();
-    if (winWidth <= 750) {
-        $("#oe-nav-ul").removeClass("tabWidthVertical tabWidthUser tabWidthWide tabWidthFull");
-        if (userMode) {
-            $("#oe-nav-ul").addClass("tabWidthUser");
-        } else {
-            $("#oe-nav-ul").addClass("tabWidthVertical");
-        }
-    } else if (winWidth > 750 && winWidth <= 1024) {
-        $("#oe-nav-ul").removeClass("tabWidthVertical tabWidthUser tabWidthWide tabWidthFull");
-        if (userMode) {
-            $("#oe-nav-ul").addClass("tabWidthUser");
-        } else {
-            $("#oe-nav-ul").addClass("tabWidthWide");
-        }
-    } else if (winWidth > 1024) {
-        $("#oe-nav-ul").removeClass("tabWidthVertical tabWidthUser tabWidthWide tabWidthFull");
-        $("#oe-nav-ul").addClass("tabWidthFull");
-    }
-    if (winWidth > 1024) {
-        if (!userMode) {
-            $('.row  .control-label, .row  .oe-input').removeClass('col-sm-6');
-            $('.row  .control-label').addClass('col-sm-4 col-sm-offset-1');
-            $('.row  .oe-input').addClass('col-sm-4');
-        }
-    } else {
-        if (!userMode) {
-            $('.row  .control-label, .row  .oe-input').addClass('col-sm-6');
-            $('.row  .control-label').removeClass('col-sm-4 col-sm-offset-1');
-            $('.row  .oe-input').removeClass('col-sm-4');
-        }
-    }
-});
-$(function() {
-    $(window).trigger('resize'); // to avoid repeating code triggers above on page open
-});
-</script>
-<script>
 $('.scroll').click(function() {
     if ($(window).scrollTop() == 0) {
         alert(<?php echo xlj("Already at the top of the page"); ?>);
@@ -912,5 +798,5 @@ $('.scroll').click(function() {
     return false;
 });
 </script>
+</body>
 </html>
-

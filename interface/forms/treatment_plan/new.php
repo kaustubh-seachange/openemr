@@ -1,4 +1,5 @@
 <?php
+
 /**
  * treatment plan form.
  *
@@ -11,13 +12,13 @@
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-
-require_once("../../globals.php");
+require_once(__DIR__ . "/../../globals.php");
 require_once("$srcdir/api.inc");
 require_once("$srcdir/patient.inc");
 require_once("$srcdir/options.inc.php");
 
 use OpenEMR\Common\Csrf\CsrfUtils;
+use OpenEMR\Core\Header;
 
 formHeader("Form:Treatment Planning");
 $returnurl = 'encounter_top.php';
@@ -30,16 +31,10 @@ $obj = $formid ? formFetch("form_treatment_plan", $formid) : array();
     ?>
 <html><head>
 
-<link rel="stylesheet" href="<?php echo $css_header;?>" type="text/css">
-<link rel="stylesheet" href="<?php echo $GLOBALS['assets_static_relative']; ?>/jquery-datetimepicker/build/jquery.datetimepicker.min.css">
+<?php Header::setupHeader('datetime-picker'); ?>
 
-<script type="text/javascript" src="<?php echo $GLOBALS['webroot'] ?>/library/textformat.js?v=<?php echo $v_js_includes; ?>"></script>
-<script type="text/javascript" src="<?php echo $GLOBALS['webroot'] ?>/library/dialog.js?v=<?php echo $v_js_includes; ?>"></script>
-<script type="text/javascript" src="<?php echo $GLOBALS['assets_static_relative']; ?>/jquery/dist/jquery.min.js"></script>
-<script type="text/javascript" src="<?php echo $GLOBALS['assets_static_relative']; ?>/jquery-datetimepicker/build/jquery.datetimepicker.full.min.js"></script>
-
-<script language="JavaScript">
- $(function() {
+<script>
+ $(function () {
   var win = top.printLogSetup ? top : opener.top;
   win.printLogSetup(document.getElementById('printbutton'));
 
@@ -56,10 +51,10 @@ $obj = $formid ? formFetch("form_treatment_plan", $formid) : array();
 </head>
 <body class="body_top">
 <p><span class="forms-title"><?php echo xlt('Treatment Planning'); ?></span></p>
-</br>
+<br />
 <?php
 echo "<form method='post' name='my_form' " .
-  "action='$rootdir/forms/treatment_plan/save.php?id=" . attr_url($formid) ."'>\n";
+  "action='$rootdir/forms/treatment_plan/save.php?id=" . attr_url($formid) . "'>\n";
 ?>
 <input type="hidden" name="csrf_token_form" value="<?php echo attr(CsrfUtils::collectCsrfToken()); ?>" />
 <table  border="0">
@@ -69,10 +64,10 @@ echo "<form method='post' name='my_form' " .
         <td class="forms">
             <label class="forms-data"> <?php if (is_numeric($pid)) {
                 $result = getPatientData($pid, "fname,lname,squad");
-                echo text($result['fname'])." ".text($result['lname']);
+                echo text($result['fname']) . " " . text($result['lname']);
                                        }
 
-                                       $patient_name=($result['fname'])." ".($result['lname']);
+                                       $patient_name = ($result['fname']) . " " . ($result['lname']);
                                         ?>
    </label>
    <input type="hidden" name="client_name" value="<?php echo attr($patient_name);?>">
@@ -84,7 +79,7 @@ echo "<form method='post' name='my_form' " .
             echo text($result['DOB']);
                                    }
 
-                                   $dob=($result['DOB']);
+                                   $dob = ($result['DOB']);
                                     ?>
    </label>
      <input type="hidden" name="DOB" value="<?php echo attr($dob);?>">
@@ -98,7 +93,7 @@ echo "<form method='post' name='my_form' " .
                 echo text($result['pid']);
                                         }
 
-                                        $patient_id=$result['pid'];
+                                        $patient_id = $result['pid'];
                                         ?>
    </label>
     <input type="hidden" name="client_number" value="<?php echo attr($patient_id);?>">

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * history_save.php
  *
@@ -9,13 +10,12 @@
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-
 require_once("../../globals.php");
 require_once("$srcdir/patient.inc");
 require_once("history.inc.php");
-require_once("$srcdir/acl.inc");
 require_once("$srcdir/options.inc.php");
 
+use OpenEMR\Common\Acl\AclMain;
 use OpenEMR\Common\Csrf\CsrfUtils;
 
 if (!CsrfUtils::verifyCsrfToken($_POST["csrf_token_form"])) {
@@ -23,14 +23,14 @@ if (!CsrfUtils::verifyCsrfToken($_POST["csrf_token_form"])) {
 }
 
 // Check authorization.
-if (acl_check('patients', 'med')) {
+if (AclMain::aclCheckCore('patients', 'med')) {
     $tmp = getPatientData($pid, "squad");
-    if ($tmp['squad'] && ! acl_check('squads', $tmp['squad'])) {
+    if ($tmp['squad'] && ! AclMain::aclCheckCore('squads', $tmp['squad'])) {
         die(xlt("Not authorized for this squad."));
     }
 }
 
-if (!acl_check('patients', 'med', '', array('write','addonly'))) {
+if (!AclMain::aclCheckCore('patients', 'med', '', array('write','addonly'))) {
     die(xlt("Not authorized"));
 }
 
@@ -52,7 +52,7 @@ while ($frow = sqlFetchArray($fres)) {
     if (isset($_POST["form_$field_id"])) {
         $newdata[$field_id] = get_layout_form_value($frow);
     // php fix for risk factor checkboxes unchecked after one was checked
-    } else if ($field_id == 'usertext11') {
+    } elseif ($field_id == 'usertext11') {
         $newdata[$field_id] = get_layout_form_value($frow);
     }
 }

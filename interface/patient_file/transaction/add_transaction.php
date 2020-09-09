@@ -1,4 +1,5 @@
 <?php
+
 /**
  * add_transaction is a misnomer, as this script will now also edit
  * existing transactions.
@@ -10,7 +11,6 @@
  * @copyright Copyright (c) 2017-2018 Brady Miller <brady.g.miller@gmail.com>
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
-
 
 require_once("../../globals.php");
 require_once("$srcdir/transactions.inc");
@@ -151,12 +151,12 @@ $trow = $transid ? getTransById($transid) : array();
 
 <title><?php echo xlt('Add/Edit Patient Transaction'); ?></title>
 
-<?php Header::setupHeader(['common','datetime-picker']); ?>
+<?php Header::setupHeader(['common','datetime-picker','select2']); ?>
 
 <?php include_once("{$GLOBALS['srcdir']}/options.js.php"); ?>
 
-<script type="text/javascript">
-$(function() {
+<script>
+$(function () {
   if(window.tabbify){
     tabbify();
   }
@@ -167,7 +167,7 @@ $(function() {
 
 var mypcc = <?php echo js_escape($GLOBALS['phone_country_code']); ?>;
 
-$(function(){
+$(function () {
   $("#send_sum_flag").click(function() {
     if ( $('#send_sum_flag').prop('checked') ) {
       // Enable the send_sum_elec_flag checkbox
@@ -180,10 +180,22 @@ $(function(){
     }
   });
 
+  $(".select-dropdown").select2({
+    theme: "bootstrap4",
+    <?php require($GLOBALS['srcdir'] . '/js/xl/select2.js.php'); ?>
+  });
+  if (typeof error !== 'undefined') {
+    if (error) {
+        alertMsg(error);
+    }
+  }
+
   $('.datepicker').datetimepicker({
     <?php $datetimepicker_timepicker = false; ?>
     <?php $datetimepicker_showseconds = false; ?>
     <?php $datetimepicker_formatInput = true; ?>
+    <?php $datetimepicker_minDate = false; ?>
+    <?php $datetimepicker_maxDate = false; ?>
     <?php require($GLOBALS['srcdir'] . '/js/xl/jquery-datetimepicker-2-5-4.js.php'); ?>
     <?php // can add any additional javascript settings to datetimepicker here; need to prepend first setting with a comma ?>
   });
@@ -191,6 +203,44 @@ $(function(){
     <?php $datetimepicker_timepicker = true; ?>
     <?php $datetimepicker_showseconds = false; ?>
     <?php $datetimepicker_formatInput = true; ?>
+    <?php $datetimepicker_minDate = false; ?>
+    <?php $datetimepicker_maxDate = false; ?>
+    <?php require($GLOBALS['srcdir'] . '/js/xl/jquery-datetimepicker-2-5-4.js.php'); ?>
+    <?php // can add any additional javascript settings to datetimepicker here; need to prepend first setting with a comma ?>
+  });
+  $('.datepicker-past').datetimepicker({
+    <?php $datetimepicker_timepicker = false; ?>
+    <?php $datetimepicker_showseconds = false; ?>
+    <?php $datetimepicker_formatInput = true; ?>
+    <?php $datetimepicker_minDate = false; ?>
+    <?php $datetimepicker_maxDate = '+1970/01/01'; ?>
+    <?php require($GLOBALS['srcdir'] . '/js/xl/jquery-datetimepicker-2-5-4.js.php'); ?>
+    <?php // can add any additional javascript settings to datetimepicker here; need to prepend first setting with a comma ?>
+  });
+  $('.datetimepicker-past').datetimepicker({
+    <?php $datetimepicker_timepicker = true; ?>
+    <?php $datetimepicker_showseconds = false; ?>
+    <?php $datetimepicker_formatInput = true; ?>
+    <?php $datetimepicker_minDate = false; ?>
+    <?php $datetimepicker_maxDate = '+1970/01/01'; ?>
+    <?php require($GLOBALS['srcdir'] . '/js/xl/jquery-datetimepicker-2-5-4.js.php'); ?>
+    <?php // can add any additional javascript settings to datetimepicker here; need to prepend first setting with a comma ?>
+  });
+  $('.datepicker-future').datetimepicker({
+    <?php $datetimepicker_timepicker = false; ?>
+    <?php $datetimepicker_showseconds = false; ?>
+    <?php $datetimepicker_formatInput = true; ?>
+    <?php $datetimepicker_minDate = '-1970/01/01'; ?>
+    <?php $datetimepicker_maxDate = false; ?>
+    <?php require($GLOBALS['srcdir'] . '/js/xl/jquery-datetimepicker-2-5-4.js.php'); ?>
+    <?php // can add any additional javascript settings to datetimepicker here; need to prepend first setting with a comma ?>
+  });
+  $('.datetimepicker-future').datetimepicker({
+    <?php $datetimepicker_timepicker = true; ?>
+    <?php $datetimepicker_showseconds = false; ?>
+    <?php $datetimepicker_formatInput = true; ?>
+    <?php $datetimepicker_minDate = '-1970/01/01'; ?>
+    <?php $datetimepicker_maxDate = false; ?>
     <?php require($GLOBALS['srcdir'] . '/js/xl/jquery-datetimepicker-2-5-4.js.php'); ?>
     <?php // can add any additional javascript settings to datetimepicker here; need to prepend first setting with a comma ?>
   });
@@ -298,7 +348,7 @@ function submitme() {
 
 </script>
 
-<style type="text/css">
+<style>
 .form-control {
     width: auto;
     display: inline;
@@ -325,32 +375,28 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
 ?>
 
 </head>
-<body class="body_top" onload="<?php echo $body_onload_code; ?>" >
-    <div id="container_div" class="<?php echo $oemr_ui->oeContainer();?>">
+<body onload="<?php echo $body_onload_code; ?>" >
+    <div id="container_div" class="<?php echo $oemr_ui->oeContainer();?> mt-3">
         <form name='new_transaction' method='post' action='add_transaction.php?transid=<?php echo attr_url($transid); ?>' onsubmit='return validate(this)'>
-        <input type="hidden" name="csrf_token_form" value="<?php echo attr(CsrfUtils::collectCsrfToken()); ?>" />
-        <input type='hidden' name='mode' value='add'>
+            <input type="hidden" name="csrf_token_form" value="<?php echo attr(CsrfUtils::collectCsrfToken()); ?>" />
+            <input type='hidden' name='mode' value='add' />
             <div class="row">
                 <div class="col-sm-12">
                     <?php require_once("$include_root/patient_file/summary/dashboard_header.php"); ?>
                 </div>
-            </div>
-            <div class="row">
+                <br />
+                <br />
                 <div class="col-sm-12">
                     <div class="btn-group">
-                        <a href="#" class="btn btn-default btn-save" onclick="submitme();">
+                        <a href="#" class="btn btn-primary btn-save" onclick="submitme();">
                             <?php echo xlt('Save'); ?>
                         </a>
-                        <a href="transactions.php" class="btn btn-link btn-cancel" onclick="top.restoreSession()">
+                        <a href="transactions.php" class="btn btn-secondary btn-cancel" onclick="top.restoreSession()">
                             <?php echo xlt('Cancel'); ?>
                         </a>
                     </div>
                 </div>
-            </div>
-            <br>
-            <br>
-            <div class="row">
-                <div class="col-sm-12">
+                <div class="col-sm-12 mt-3">
                     <fieldset>
                         <legend><?php echo xlt('Select Transaction Type'); ?></legend>
                         <div class="forms col-sm-8">
@@ -388,7 +434,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                             <input type="checkbox" id="send_sum_flag" name="send_sum_flag">
                                         <?php } ?>
 
-                                        <span class="text"><?php echo xlt('Sent Summary of Care?') ?></span><br>
+                                        <span class="text"><?php echo xlt('Sent Summary of Care?') ?></span><br />
 
                                         <?php if (!(empty($itemAMC)) && !(empty($itemAMC_elec))) { ?>
                                             &nbsp;&nbsp;<input type="checkbox" id="send_sum_elec_flag" name="send_sum_elec_flag" checked>
@@ -398,7 +444,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                             &nbsp;&nbsp;<input type="checkbox" id="send_sum_elec_flag" name="send_sum_elec_flag" disabled>
                                         <?php } ?>
 
-                                        <span class="text"><?php echo xlt('Sent Summary of Care Electronically?') ?></span><br>
+                                        <span class="text"><?php echo xlt('Sent Summary of Care Electronically?') ?></span><br />
 
                                     </div>
                                 </div>
@@ -408,9 +454,8 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                     </fieldset>
                 </div>
             </div>
+
             <div id='referdiv'>
-
-
                 <div id="DEM">
                     <ul class="tabNav">
                         <?php
@@ -557,15 +602,14 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                 </div><!-- end of DEM div -->
             </div><!-- end of referdiv -->
         </form>
-        <p />
 
         <!-- include support for the list-add selectbox feature -->
-        <?php include $GLOBALS['fileroot']."/library/options_listadd.inc"; ?>
+        <?php include $GLOBALS['fileroot'] . "/library/options_listadd.inc"; ?>
     </div> <!--end of container div-->
     <?php $oemr_ui->oeBelowContainerDiv();?>
 </body>
 
-<script language="JavaScript">
+<script>
 
 // Array of action conditions for the checkSkipConditions() function.
 var skipArray = [
