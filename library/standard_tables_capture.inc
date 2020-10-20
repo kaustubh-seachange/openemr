@@ -46,8 +46,25 @@ function temp_unarchive($filename, $type)
     $filename = $GLOBALS['temporary_files_dir'] . "/" . $type . "/" . basename($filename);
     if (!file_exists($filename)) {
         return false;
+    } elseif ($type == "ICD10") {
+        // copy zip file contents to /tmp/ICD10 due to CMS zip file
+        $zip = new ZipArchive();
+        $path = $GLOBALS['temporary_files_dir'] . "/" . $type;
+        if ($zip->open($filename) === true) {
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $sub_dir_filename = $zip->getNameIndex($i);
+                $fileinfo = pathinfo($sub_dir_filename);
+                if (!(copy("zip://" . $filename . "#" . $sub_dir_filename, "$path/" . $fileinfo['basename']))) {
+                    return false;
+                }
+            }
+            $zip->close();
+            return true;
+        } else {
+            return false;
+        }
     } else {
-    // let's unzip the file
+        // unzip the file
         $zip = new ZipArchive();
         if ($zip->open($filename) === true) {
             if (!($zip->extractTo($GLOBALS['temporary_files_dir'] . "/" . $type))) {
@@ -55,8 +72,6 @@ function temp_unarchive($filename, $type)
             }
             $zip->close();
             return true;
-        } else {
-            return false;
         }
     }
 }
@@ -430,10 +445,6 @@ function icd_import($type)
     // set up paths
     $dir_icd = $GLOBALS['temporary_files_dir'] . "/" . $type . "/";
     $dir = str_replace('\\', '/', $dir_icd);
-    // since CMS nested the ICD10 codes...
-    if ($type == 'ICD10') {
-        $dir = $dir . "/2020 Code Descriptions/";
-    }
     $db_load = '';
     $db_update = '';
 

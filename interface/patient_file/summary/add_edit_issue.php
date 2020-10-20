@@ -535,17 +535,6 @@ function getCodeText($code)
             }
         }
 
-        // Process click on Delete link.
-        function deleteme() {
-            dlgopen('../deleter.php?issue=' + <?php echo js_url($issue); ?> + '&csrf_token_form=' + <?php echo js_url(CsrfUtils::collectCsrfToken()); ?>, '_blank', 500, 450);
-            return false;
-        }
-
-        // Called by the deleteme.php window on a successful delete.
-        function imdeleted() {
-            closeme();
-        }
-
         function closeme() {
             dlgclose();
         }
@@ -759,7 +748,7 @@ function getCodeText($code)
                                 if ($issue || $thistype) {
                                     if ($index == $type_index) {
                                         echo text($value[1]);
-                                        echo "<input type='hidden' name='form_type' value='" . attr($index) . "'>\n";
+                                        echo "<input type='hidden' name='form_type' value='" . attr($index) . "' />\n";
                                     }
                                 } else {
                                     echo "   <input type='radio' name='form_type' value='" . attr($index) . "' onclick='newtype(" . attr_js($index) . ")'";
@@ -785,18 +774,18 @@ function getCodeText($code)
                         </div>
                         <div class="form-group col-12">
                             <label class="col-form-label" for="title_diagnosis"><?php echo xlt('Title'); ?>:</label>
-                            <input type='text' class="form-control" name='form_title' id='form_title' value='<?php echo attr($irow['title']) ?>'>
+                            <input type='text' class="form-control" name='form_title' id='form_title' value='<?php echo attr($irow['title']) ?>' />
                             <input type='hidden' name='form_title_id' value='<?php echo attr($irow['list_option_id']) ?>'>
                         </div>
                         <div class="form-group col-12" id='row_active_codes'>
                             <label for="form_active_codes" class="col-form-label"><?php echo xlt('Active Issue Codes'); ?>:</label>
                             <select name='form_active_codes' id='form_active_codes' class= "form-control" size='4'
-                                onchange="onActiveCodeSelected()" style="width:100%;"></select>
+                                onchange="onActiveCodeSelected()"></select>
                         </div>
                         <div class="form-group col-12" id='row_selected_codes'>
                             <label for="form_selected_codes" class="col-form-label"><?php echo xlt('Coding'); ?>:</label>
                             <select name='form_selected_codes' id='form_selected_codes' class= "form-control" multiple size='4'
-                                onchange="onCodeSelectionChange()" style="width:100%;">
+                                onchange="onCodeSelectionChange()">
                             <?php
                             if ($irow['diagnosis'] != "") {
                                 $codes = explode(";", $irow['diagnosis']);
@@ -807,7 +796,7 @@ function getCodeText($code)
                             ?>
                             </select>
                             <div class="btn-group" style="margin-top:3px;">
-                                <button type="button" class="btn btn-secondary btn-sm" style="margin-right:5px;" onclick='onAddCode()'><?php echo xlt('Add');?></button>
+                                <button type="button" class="btn btn-primary btn-sm" style="margin-right:5px;" onclick='onAddCode()'><?php echo xlt('Add');?></button>
                                 <button type="button" id="rem_selected_code" class="btn btn-secondary btn-sm" onclick='onRemoveCode()'><?php echo xlt('Remove');?></button>
                             </div>
                             <input type='hidden' class="form-control" name='form_diagnosis' id='form_diagnosis'
@@ -816,7 +805,7 @@ function getCodeText($code)
                         </div>
                         <div class="form-group col-12">
                             <label class="col-form-label" for="form_begin"><?php echo xlt('Begin Date'); ?>:</label>
-                            <input type='text' class='datepicker form-control' name='form_begin' id='form_begin' value='<?php echo attr(oeFormatShortDate($irow['begdate'])) ?>' title='<?php echo xla('yyyy-mm-dd date of onset, surgery or start of medication'); ?>'>
+                            <input type='text' class='datepicker form-control' name='form_begin' id='form_begin' value='<?php echo attr(oeFormatShortDate($irow['begdate'])) ?>' title='<?php echo xla('yyyy-mm-dd date of onset, surgery or start of medication'); ?>' />
                         </div>
                         <div class="form-group col-12" id='row_enddate'>
                             <label class="col-form-label" for="form_begin"><?php echo xlt('End Date'); ?>:</label>
@@ -919,11 +908,6 @@ function getCodeText($code)
                                 <div class="btn-group" role="group">
                                     <button type='submit' name='form_save' class="btn btn-primary btn-save" value='<?php echo xla('Save'); ?>'><?php echo xlt('Save'); ?></button>
                                     <button type="button" class="btn btn-secondary btn-cancel" onclick='closeme();'><?php echo xlt('Cancel'); ?></button>
-                                    <?php
-                                    if ($issue && AclMain::aclCheckCore('admin', 'super')) { ?>
-                                        <button type='submit' name='form_delete' class="btn btn-danger btn-cancel btn-delete" onclick='deleteme()' value='<?php echo xla('Delete'); ?>'><?php echo xlt('Delete'); ?></button>
-                                        <?php
-                                    } ?>
                                 </div>
                             </div>
                         </div>

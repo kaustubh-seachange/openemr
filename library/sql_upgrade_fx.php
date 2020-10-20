@@ -542,6 +542,20 @@ function convertLayoutProperties()
     } // end form
 }
 
+function flush_echo($string = '')
+{
+    if ($string) {
+        echo $string;
+    }
+    // now flush to force browser to pay attention.
+    if (empty($GLOBALS['force_simple_sql_upgrade'])) {
+        // this is skipped when running sql upgrade from command line
+        echo str_pad('', 4096) . "\n";
+    }
+    ob_flush();
+    flush();
+}
+
 /**
  * Upgrade or patch the database with a selected upgrade/patch file.
  *
@@ -684,6 +698,8 @@ function upgradeFromSqlFile($filename, $path = '')
     $query = "";
     $line = "";
     $skipping = false;
+    $special = false;
+    $trim = true;
     $progress = 0;
 
     while (!feof($fd)) {
@@ -700,9 +716,12 @@ function upgradeFromSqlFile($filename, $path = '')
             continue;
         }
 
-        $progress_stat = 100 - round((($file_size - $progress) / $file_size) * 100, 0);
-        $progress_stat = $progress_stat > 100 ? 100 : $progress_stat;
-        echo "<script>processProgress = $progress_stat;progressStatus();</script>";
+        if (empty($GLOBALS['force_simple_sql_upgrade'])) {
+            // this is skipped when running sql upgrade from command line
+            $progress_stat = 100 - round((($file_size - $progress) / $file_size) * 100, 0);
+            $progress_stat = $progress_stat > 100 ? 100 : $progress_stat;
+            echo "<script>processProgress = $progress_stat;progressStatus();</script>";
+        }
 
         if (preg_match('/^#IfNotTable\s+(\S+)/', $line, $matches)) {
             $skipping = tableExists($matches[1]);
@@ -1105,8 +1124,14 @@ function upgradeFromSqlFile($filename, $path = '')
         } elseif (preg_match('/^#EndIf/', $line)) {
             $skipping = false;
         }
-
-        if (preg_match('/^\s*#/', $line)) {
+        if (preg_match('/^#SpecialSql/', $line)) {
+            $special = true;
+            $line = " ";
+        } elseif (preg_match('/^#EndSpecialSql/', $line)) {
+            $special = false;
+            $trim = false;
+            $line = " ";
+        } elseif (preg_match('/^\s*#/', $line)) {
             continue;
         }
 
@@ -1114,11 +1139,22 @@ function upgradeFromSqlFile($filename, $path = '')
             continue;
         }
 
+        if ($special) {
+            $query = $query . " " . $line;
+            continue;
+        }
+
         $query = $query . $line;
-        if (substr($query, -1) == ';') {
-            $query = rtrim($query, ';');
+
+        if (substr(trim($query), -1) == ';') {
+            if ($trim) {
+                $query = rtrim($query, ';');
+            } else {
+                $trim = true;
+            }
 
             flush_echo("$query<br />\n");
+
             if (!sqlStatement($query)) {
                 echo "<p class='text-danger'>The above statement failed: " .
                     getSqlLastError() . "<br />Upgrading will continue.<br /></p>\n";

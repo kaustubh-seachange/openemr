@@ -2068,9 +2068,10 @@ $GLOBALS_METADATA = array(
             xl('Hash Algorithm for Authentication'),
             array(
                 'DEFAULT' => xl('PHP Default'),
-                'BCRYPT' => xl('Bcrypt'),
-                'ARGON2I' => xl('Argon2I') . ' (PHP 7.3 or greater)',
-                'ARGON2ID' => xl('Argon2ID') . ' (PHP 7.3 or greater)',
+                'BCRYPT' => 'Bcrypt',
+                'ARGON2I' => 'Argon2I',
+                'ARGON2ID' => 'Argon2ID',
+                'SHA512HASH' => 'SHA512 (ONC 2015)',
             ),
             'DEFAULT',                // default
             xl('Hashing algorithm for authentication. Suggest PHP Default unless you know what you are doing.')
@@ -2181,13 +2182,46 @@ $GLOBALS_METADATA = array(
             xl('Authentication argon hash thread number. Suggest PHP Default unless you know what you are doing.')
         ),
 
+        'gbl_auth_sha512_rounds' => array(
+            xl('Authentication SHA512 Hash Rounds Number'),
+            array(
+                '1000' => '1000',
+                '5000' => '5000',
+                '10000' => '10000',
+                '15000' => '15000',
+                '20000' => '20000',
+                '30000' => '30000',
+                '40000' => '40000',
+                '50000' => '50000',
+                '75000' => '75000',
+                '100000' => '100000',
+                '200000' => '200000',
+                '300000' => '300000',
+                '400000' => '400000',
+                '500000' => '500000',
+                '750000' => '750000',
+                '1000000' => '1000000',
+                '2000000' => '2000000',
+                '3000000' => '3000000',
+                '4000000' => '4000000',
+                '5000000' => '5000000',
+                '6000000' => '6000000',
+                '7000000' => '7000000',
+                '8000000' => '8000000',
+                '9000000' => '9000000',
+            ),
+            '100000',                // default
+            xl('Authentication SHA512 hash rounds number.')
+        ),
+
         'gbl_token_hash_algo' => array(
             xl('Hash Algorithm for Token'),
             array(
                 'DEFAULT' => xl('PHP Default'),
-                'BCRYPT' => xl('Bcrypt'),
-                'ARGON2I' => xl('Argon2I') . ' (PHP 7.3 or greater)',
-                'ARGON2ID' => xl('Argon2ID') . ' (PHP 7.3 or greater)',
+                'BCRYPT' => 'Bcrypt',
+                'ARGON2I' => 'Argon2I',
+                'ARGON2ID' => 'Argon2ID',
+                'SHA512HASH' => 'SHA512 (ONC 2015)',
             ),
             'DEFAULT',                // default
             xl('Hashing algorithm for token. Suggest PHP Default unless you know what you are doing.')
@@ -2296,6 +2330,38 @@ $GLOBALS_METADATA = array(
             ),
             'DEFAULT',                // default
             xl('Token argon hash thread number. Suggest PHP Default unless you know what you are doing.')
+        ),
+
+        'gbl_token_sha512_rounds' => array(
+            xl('Token SHA512 Hash Rounds Number'),
+            array(
+                '1000' => '1000',
+                '5000' => '5000',
+                '10000' => '10000',
+                '15000' => '15000',
+                '20000' => '20000',
+                '30000' => '30000',
+                '40000' => '40000',
+                '50000' => '50000',
+                '75000' => '75000',
+                '100000' => '100000',
+                '200000' => '200000',
+                '300000' => '300000',
+                '400000' => '400000',
+                '500000' => '500000',
+                '750000' => '750000',
+                '1000000' => '1000000',
+                '2000000' => '2000000',
+                '3000000' => '3000000',
+                '4000000' => '4000000',
+                '5000000' => '5000000',
+                '6000000' => '6000000',
+                '7000000' => '7000000',
+                '8000000' => '8000000',
+                '9000000' => '9000000',
+            ),
+            '100000',                // default
+            xl('Token SHA512 hash rounds number.')
         ),
     ),
 
@@ -2673,7 +2739,7 @@ $GLOBALS_METADATA = array(
         'audit_events_query' => array(
             xl('Audit Logging SELECT Query'),
             'bool',                           // data type
-            '0',                              // default
+            '1',                              // default
             xl('Enable logging of all SQL SELECT queries.') . ' (' . xl('Note that Audit Logging needs to be enabled above') . ')'
         ),
 
@@ -2761,7 +2827,7 @@ $GLOBALS_METADATA = array(
                 '1' => xl('Hide print feature'),
                 '2' => xl('Log entire document'),
             ),
-            '0',                               // default
+            '2',                               // default
             xl('Individual pages can override 2nd and 3rd options by implementing a log message.')
         ),
 
@@ -3868,7 +3934,7 @@ $GLOBALS_METADATA = array(
     ),
 );
 
-if (!$skipGlobalEvent) {
+if (empty($skipGlobalEvent)) {
     $globalsInitEvent = new GlobalsInitializedEvent(new GlobalsService($GLOBALS_METADATA, $USER_SPECIFIC_GLOBALS, $USER_SPECIFIC_TABS));
     $globalsInitEvent = $GLOBALS["kernel"]->getEventDispatcher()->dispatch(GlobalsInitializedEvent::EVENT_HANDLE, $globalsInitEvent, 10);
     $globalsService = $globalsInitEvent->getGlobalsService()->save();

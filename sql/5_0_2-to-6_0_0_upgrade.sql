@@ -337,7 +337,7 @@ INSERT INTO `supported_external_dataloads` (`load_type`, `load_source`, `load_re
 #EndIf
 
 #IfMissingColumn patient_access_onsite portal_login_username
-ALTER TABLE `patient_access_onsite`  ADD `portal_login_username` VARCHAR(100) DEFAULT NULL COMMENT 'User entered username', ADD `portal_onetime` VARCHAR(255) DEFAULT NULL;
+ALTER TABLE `patient_access_onsite` ADD `portal_login_username` VARCHAR(100) DEFAULT NULL COMMENT 'User entered username', ADD `portal_onetime` VARCHAR(255) DEFAULT NULL;
 UPDATE `patient_access_onsite` SET `portal_pwd_status` = '0', `portal_login_username` = `portal_username`;
 #EndIf
 
@@ -1944,7 +1944,7 @@ INSERT INTO list_options(list_id,option_id,title,seq) VALUES ('allergyintoleranc
 #EndIf
 
 #IfMissingColumn ar_activity deleted
-ALTER TABLE `ar_activity` ADD COLUMN `deleted` datetime DEFAULT NULL COMMENT 'NULL if active, otherwise when voided';
+ALTER TABLE `ar_activity` ADD `deleted` datetime DEFAULT NULL COMMENT 'NULL if active, otherwise when voided';
 #EndIf
 
 #IfNotRow2D list_options list_id lists option_id condition-verification
@@ -2169,4 +2169,95 @@ CREATE TABLE `api_log` (
   `created_time` timestamp NULL,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB;
+#EndIf
+
+#IfMissingColumn api_log log_id
+ALTER TABLE `api_log` ADD `log_id` int(11) NOT NULL;
+#EndIf
+
+#IfColumn api_log encrypted
+ALTER TABLE `api_log` DROP COLUMN `encrypted`;
+#EndIf
+
+#IfColumn patient_data care_team
+ALTER TABLE `patient_data` CHANGE `care_team` `care_team_provider` text;
+#EndIf
+
+#IfMissingColumn patient_data care_team_facility
+ALTER TABLE `patient_data` ADD `care_team_facility` text;
+#EndIf
+
+#IfRow2D layout_options form_id DEM field_id care_team
+SET @group_id = (SELECT group_id FROM layout_options WHERE field_id='care_team' AND form_id='DEM');
+SET @backup_group_id = (SELECT group_id FROM layout_options WHERE field_id='DOB' AND form_id='DEM');
+SET @seq = (SELECT MAX(seq) FROM layout_options WHERE group_id = IFNULL(@group_id,@backup_group_id) AND form_id='DEM');
+UPDATE `layout_options` SET field_id='care_team_provider', group_id = IFNULL(@group_id,@backup_group_id), seq=@seq+1, title='Care Team (Provider)', data_type=45 WHERE form_id='DEM' AND field_id='care_team';
+#EndIf
+
+#IfNotRow2D layout_options form_id DEM field_id care_team_facility
+SET @group_id = (SELECT group_id FROM layout_options WHERE field_id='care_team_provider' AND form_id='DEM');
+SET @backup_group_id = (SELECT group_id FROM layout_options WHERE field_id='DOB' AND form_id='DEM');
+SET @seq = (SELECT MAX(seq) FROM layout_options WHERE group_id = IFNULL(@group_id,@backup_group_id) AND form_id='DEM');
+INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'care_team_facility', IFNULL(@group_id,@backup_group_id), 'Care Team (Facility)', @seq+1, 44, 1, 0, 0, '', 1, 1, '', '', '', 0);
+#EndIf
+
+#IfNotRow4D supported_external_dataloads load_type ICD10 load_source CMS load_release_date 2020-10-01 load_filename Code-Descriptions.zip
+INSERT INTO `supported_external_dataloads` (`load_type`, `load_source`, `load_release_date`, `load_filename`, `load_checksum`) VALUES
+('ICD10', 'CMS', '2020-10-01', 'Code-Descriptions.zip', 'f22e7201fa662689d85b926a32359701');
+#EndIf
+
+#IfNotRow4D supported_external_dataloads load_type ICD10 load_source CMS load_release_date 2020-10-01 load_filename Zip File 5 2021 ICD-10-PCS Order File (Long and Abbreviated Titles).zip
+INSERT INTO `supported_external_dataloads` (`load_type`, `load_source`, `load_release_date`, `load_filename`, `load_checksum`) VALUES
+('ICD10', 'CMS', '2020-10-01', 'Zip File 5 2021 ICD-10-PCS Order File (Long and Abbreviated Titles).zip', '6a61cee7a8f774e23412ca1330980bbb');
+#EndIf
+
+#IfNotColumnType documents hash varchar(255)
+ALTER TABLE `documents` MODIFY `hash` varchar(255) DEFAULT NULL;
+#EndIf
+
+#IfTable log_validator
+DROP TABLE `log_validator`;
+#EndIf
+
+#IfMissingColumn log_comment_encrypt checksum_api
+ALTER TABLE `log_comment_encrypt` ADD `checksum_api` longtext;
+#EndIf
+
+#IfNotColumnType onsite_signatures sig_hash varchar(255)
+ALTER TABLE `onsite_signatures` MODIFY `sig_hash` varchar(255) NOT NULL;
+#EndIf
+
+#IfMissingColumn ccda hash
+ALTER TABLE `ccda` ADD `hash` varchar(255) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn ccda uuid
+ALTER TABLE `ccda` ADD `uuid` binary(16) DEFAULT NULL;
+#EndIf
+
+#IfUuidNeedUpdate ccda
+#EndIf
+
+#IfNotIndex ccda uuid
+CREATE UNIQUE INDEX `uuid` ON `ccda` (`uuid`);
+#EndIf
+
+#IfNotColumnTypeDefault form_prior_auth date datetime NULL
+ALTER TABLE `form_prior_auth` MODIFY `date` datetime NULL;
+SET @currentSQLMode = (SELECT @@sql_mode);
+SET sql_mode = '';
+UPDATE `form_prior_auth` SET `date` = NULL WHERE `date` = '0000-00-00 00:00:00';
+SET sql_mode = @currentSQLMode;
+#EndIf
+
+#IfMissingColumn form_prior_auth date_from
+ALTER TABLE `form_prior_auth` ADD `date_from` date DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn form_prior_auth date_to
+ALTER TABLE `form_prior_auth` ADD `date_to` date DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn documents deleted
+ALTER TABLE `documents` ADD `deleted` tinyint(1) NOT NULL DEFAULT '0',
 #EndIf

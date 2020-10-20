@@ -13,6 +13,12 @@
 
 /* @TODO add language selection. needs RTL testing */
 
+if (php_sapi_name() === 'cli') {
+    // setting for when running as command line script
+    // need this for output to be readable when running as command line
+    $GLOBALS['force_simple_sql_upgrade'] = true;
+}
+
 // Checks if the server's PHP version is compatible with OpenEMR:
 require_once(__DIR__ . "/src/Common/Compatibility/Checker.php");
 $response = OpenEMR\Common\Compatibility\Checker::checkPhpVersion();
@@ -39,20 +45,6 @@ require_once('library/sql_upgrade_fx.php');
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Core\Header;
 use OpenEMR\Services\VersionService;
-
-$versionService = new VersionService();
-
-// Fetching current version because it was updated by the sql_upgrade_fx
-// script and this script will further modify it.
-$currentVersion = $versionService->fetch();
-
-$desiredVersion = $currentVersion;
-$desiredVersion->setDatabase($v_database);
-$desiredVersion->setTag($v_tag);
-$desiredVersion->setRealPatch($v_realpatch);
-$desiredVersion->setPatch($v_patch);
-$desiredVersion->setMinor($v_minor);
-$desiredVersion->setMajor($v_major);
 
 // Force logging off
 $GLOBALS["enable_auditlog"] = 0;
@@ -100,16 +92,6 @@ session_write_close();
 
 header('Content-type: text/html; charset=utf-8');
 
-function flush_echo($string = '')
-{
-    if ($string) {
-        echo $string;
-    }
-    // now flush to force browser to pay attention.
-    echo str_pad('', 4096) . "\n";
-    ob_flush();
-    flush();
-}
 ?>
 <!-- @todo Adding DOCTYPE html breaks BS width/height percentages. Why? -->
 <html>
@@ -360,6 +342,16 @@ function pausePoll(othis) {
             require("acl_upgrade.php");
             echo "<br />\n";
 
+            $versionService = new VersionService();
+            $currentVersion = $versionService->fetch();
+            $desiredVersion = $currentVersion;
+            $desiredVersion['v_database'] = $v_database;
+            $desiredVersion['v_tag'] = $v_tag;
+            $desiredVersion['v_realpatch'] = $v_realpatch;
+            $desiredVersion['v_patch'] = $v_patch;
+            $desiredVersion['v_minor'] = $v_minor;
+            $desiredVersion['v_major'] = $v_major;
+
             $canRealPatchBeApplied = $versionService->canRealPatchBeApplied($desiredVersion);
             $line = "Updating version indicators";
 
@@ -368,12 +360,7 @@ function pausePoll(othis) {
             }
 
             echo "<p class='text-success'>" . $line . "...</p><br />\n";
-            $result = $versionService->update($desiredVersion);
-
-            if (!$result) {
-                echo "<p class='text-danger'>" . xlt("Version could not be updated") . "</p><br />\n";
-                exit();
-            }
+            $versionService->update($desiredVersion);
 
             echo "<p><p class='text-success'>" . xlt("Database and Access Control upgrade finished.") . "</p></p>\n";
             echo "</div></body></html>\n";

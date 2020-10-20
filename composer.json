@@ -1,6 +1,6 @@
 {
     "name": "openemr/openemr",
-    "version": "5.0.3",
+    "version": "6.0.0",
     "description": "OpenEMR is a Free and Open Source electronic health records and medical practice management application",
     "license": "GPL",
     "support": {
@@ -11,11 +11,9 @@
         "source": "https://github.com/openemr/openemr"
     },
     "require": {
-        "php": ">=7.2.0",
+        "php": ">=7.3.0",
         "academe/omnipay-authorizenetapi": "3.1.2",
         "adodb/adodb-php": "5.20.18",
-        "doctrine/common": "3.0.2",
-        "doctrine/orm": "2.7.3",
         "dompdf/dompdf": "0.8.6",
         "ezyang/htmlpurifier": "4.13.0",
         "guzzlehttp/guzzle": "6.5.5",
@@ -63,7 +61,7 @@
     },
     "config": {
         "platform": {
-            "php": "7.2"
+            "php": "7.3"
         }
     },
     "require-dev": {

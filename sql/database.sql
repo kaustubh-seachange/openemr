@@ -86,6 +86,7 @@ KEY amendment_history_id(`amendment_id`)
 DROP TABLE IF EXISTS `api_log`;
 CREATE TABLE `api_log` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `log_id` int(11) NOT NULL,
   `user_id` bigint(20) NOT NULL,
   `patient_id` bigint(20) NOT NULL,
   `ip_address` varchar(255) NOT NULL,
@@ -94,7 +95,6 @@ CREATE TABLE `api_log` (
   `request_url` text,
   `request_body` longtext,
   `response` longtext,
-  `encrypted` tinyint(1) NOT NULL,
   `created_time` timestamp NULL,
   PRIMARY KEY (`id`)
 ) ENGINE = InnoDB;
@@ -1200,7 +1200,7 @@ CREATE TABLE `documents` (
   `revision` timestamp NOT NULL,
   `foreign_id` bigint(20) default NULL,
   `docdate` date default NULL,
-  `hash` varchar(40) DEFAULT NULL COMMENT '40-character SHA-1 hash of document',
+  `hash` varchar(255) DEFAULT NULL,
   `list_id` bigint(20) NOT NULL default '0',
   `name` varchar(255) DEFAULT NULL,
   `drive_uuid` binary(16) DEFAULT NULL,
@@ -1216,6 +1216,7 @@ CREATE TABLE `documents` (
   `documentationOf` varchar(255) DEFAULT NULL,
   `encrypted` TINYINT(4) NOT NULL DEFAULT '0' COMMENT '0->No,1->Yes',
   `document_data` MEDIUMTEXT,
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY  (`id`),
   UNIQUE KEY `drive_uuid` (`drive_uuid`),
   KEY `revision` (`revision`),
@@ -3314,14 +3315,15 @@ INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`dat
 INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'allow_imm_info_share', '3', 'Allow Immunization Info Sharing', 11, 1, 1, 0, 0, 'yesno', 1, 1, '', '', '', 0);
 INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'allow_health_info_ex', '3', 'Allow Health Information Exchange', 12, 1, 1, 0, 0, 'yesno', 1, 1, '', '', '', 0);
 INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'allow_patient_portal', '3', 'Allow Patient Portal', 13, 1, 1, 0, 0, 'yesno', 1, 1, '', '', '', 0);
-INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'care_team', '3', 'Care Team', 14, 11, 1, 0, 0, '', 1, 1, '', '', '', 0);
-INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'cmsportal_login', '3', 'CMS Portal Login', 15, 2, 1, 30, 60, '', 1, 1, '', '', 'CMS Portal Login ID', 0);
-INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'imm_reg_status'  , '3', 'Immunization Registry Status'  ,16, 1, 1,1,0, 'immunization_registry_status', 1, 1, '', '', 'Immunization Registry Status', 0);
-INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'imm_reg_stat_effdate'  , '3', 'Immunization Registry Status Effective Date'  ,17, 4, 1,10,10, '', 1, 1, '', '', 'Immunization Registry Status Effective Date', 0);
-INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'publicity_code'  , '3', 'Publicity Code'  ,18, 1, 1,1,0, 'publicity_code', 1, 1, '', '', 'Publicity Code', 0);
-INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'publ_code_eff_date'  , '3', 'Publicity Code Effective Date'  ,19, 4, 1,10,10, '', 1, 1, '', '', 'Publicity Code Effective Date', 0);
-INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'protect_indicator'  , '3', 'Protection Indicator'  ,20, 1, 1,1,0, 'yesno', 1, 1, '', '', 'Protection Indicator', 0);
-INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'prot_indi_effdate'  , '3', 'Protection Indicator Effective Date'  ,21, 4, 1,10,10, '', 1, 1, '', '', 'Protection Indicator Effective Date', 0);
+INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'cmsportal_login', '3', 'CMS Portal Login', 14, 2, 1, 30, 60, '', 1, 1, '', '', 'CMS Portal Login ID', 0);
+INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'imm_reg_status'  , '3', 'Immunization Registry Status'  ,15, 1, 1,1,0, 'immunization_registry_status', 1, 1, '', '', 'Immunization Registry Status', 0);
+INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'imm_reg_stat_effdate'  , '3', 'Immunization Registry Status Effective Date'  ,16, 4, 1,10,10, '', 1, 1, '', '', 'Immunization Registry Status Effective Date', 0);
+INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'publicity_code'  , '3', 'Publicity Code'  ,17, 1, 1,1,0, 'publicity_code', 1, 1, '', '', 'Publicity Code', 0);
+INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'publ_code_eff_date'  , '3', 'Publicity Code Effective Date'  ,18, 4, 1,10,10, '', 1, 1, '', '', 'Publicity Code Effective Date', 0);
+INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'protect_indicator'  , '3', 'Protection Indicator'  ,19, 1, 1,1,0, 'yesno', 1, 1, '', '', 'Protection Indicator', 0);
+INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'prot_indi_effdate'  , '3', 'Protection Indicator Effective Date'  ,20, 4, 1,10,10, '', 1, 1, '', '', 'Protection Indicator Effective Date', 0);
+INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'care_team_provider', '3', 'Care Team (Provider)', 21, 45, 1, 0, 0, '', 1, 1, '', '', '', 0);
+INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'care_team_facility', '3', 'Care Team (Facility)', 22, 44, 1, 0, 0, '', 1, 1, '', '', '', 0);
 INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'occupation', '4', 'Occupation', 1, 2, 1, 20, 63, '', 1, 1, '', 'C', 'Occupation', 0);
 INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'industry', '4', 'Industry', 1, 26, 1, 0, 0, 'Industry', 1, 1, '', '', 'Industry', 0);
 INSERT INTO `layout_options` (`form_id`,`field_id`,`group_id`,`title`,`seq`,`data_type`,`uor`,`fld_length`,`max_length`,`list_id`,`titlecols`,`datacols`,`default_value`,`edit_options`,`description`,`fld_rows`) VALUES ('DEM', 'em_name', '4', 'Employer Name', 2, 2, 1, 20, 63, '', 1, 1, '', 'C', 'Employer Name', 0);
@@ -6735,7 +6737,7 @@ CREATE TABLE `onsite_signatures` (
   `signator` varchar(255) NOT NULL,
   `sig_image` text,
   `signature` text,
-  `sig_hash` varchar(128) NOT NULL,
+  `sig_hash` varchar(255) NOT NULL,
   `ip` varchar(46) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `pid` (`pid`,`user`),
@@ -7030,7 +7032,8 @@ CREATE TABLE `patient_data` (
   `deceased_reason` varchar(255) NOT NULL default '',
   `soap_import_status` TINYINT(4) DEFAULT NULL COMMENT '1-Prescription Press 2-Prescription Import 3-Allergy Press 4-Allergy Import',
   `cmsportal_login` varchar(60) NOT NULL default '',
-  `care_team` int(11) DEFAULT NULL,
+  `care_team_provider` TEXT,
+  `care_team_facility` TEXT,
   `county` varchar(40) NOT NULL default '',
   `industry` TEXT,
   `imm_reg_status` TEXT,
@@ -8244,6 +8247,10 @@ INSERT INTO `supported_external_dataloads` (`load_type`, `load_source`, `load_re
 ('ICD10', 'CMS', '2019-10-01', '2020-ICD-10-PCS-Order.zip', '8dc136d780ec60916e9e1fc999837bc8');
 INSERT INTO `supported_external_dataloads` (`load_type`, `load_source`, `load_release_date`, `load_filename`, `load_checksum`) VALUES
 ('CQM_VALUESET', 'NIH_VSAC', '2018-09-17', 'ep_ec_eh_cms_20180917.xml.zip', 'a1e584714b080aced6ca73b4b7b076a1');
+INSERT INTO `supported_external_dataloads` (`load_type`, `load_source`, `load_release_date`, `load_filename`, `load_checksum`) VALUES
+('ICD10', 'CMS', '2020-10-01', 'Code-Descriptions.zip', 'f22e7201fa662689d85b926a32359701');
+INSERT INTO `supported_external_dataloads` (`load_type`, `load_source`, `load_release_date`, `load_filename`, `load_checksum`) VALUES
+('ICD10', 'CMS', '2020-10-01', 'Zip File 5 2021 ICD-10-PCS Order File (Long and Abbreviated Titles).zip', '6a61cee7a8f774e23412ca1330980bbb');
 -- --------------------------------------------------------
 
 --
@@ -10722,6 +10729,7 @@ CREATE TABLE `log_comment_encrypt` (
   `log_id` int(11) NOT NULL,
   `encrypt` enum('Yes','No') NOT NULL DEFAULT 'No',
   `checksum` longtext,
+  `checksum_api` longtext,
   `version` tinyint(4) NOT NULL DEFAULT '0' COMMENT '0 for mycrypt and 1 for openssl',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
@@ -10871,6 +10879,7 @@ CREATE TABLE ccda_field_mapping (
 DROP TABLE IF EXISTS `ccda`;
 CREATE TABLE ccda (
   id INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid` binary(16) DEFAULT NULL,
   pid BIGINT(20) DEFAULT NULL,
   encounter BIGINT(20) DEFAULT NULL,
   ccda_data MEDIUMTEXT,
@@ -10880,11 +10889,13 @@ CREATE TABLE ccda (
   user_id VARCHAR(50) null,
   couch_docid VARCHAR(100) NULL,
   couch_revid VARCHAR(100) NULL,
+  `hash` varchar(255) DEFAULT NULL,
   `view` tinyint(4) NOT NULL DEFAULT '0',
   `transfer` tinyint(4) NOT NULL DEFAULT '0',
   `emr_transfer` tinyint(4) NOT NULL DEFAULT '0',
   `encrypted` TINYINT(4) NOT NULL DEFAULT '0' COMMENT '0->No,1->Yes',
   PRIMARY KEY (id),
+  UNIQUE KEY `uuid` (`uuid`),
   UNIQUE KEY unique_key (pid,encounter,time)
 ) ENGINE=InnoDB AUTO_INCREMENT=1;
 
@@ -11353,19 +11364,6 @@ CREATE TABLE `product_registration` (
   `email` varchar(255) NULL,
   `opt_out` TINYINT(1) NULL,
   PRIMARY KEY (id)
-) ENGINE=InnoDB;
-
--- -----------------------------------------------------
-
---
--- Table structure for table 'log_validator'
---
-
-DROP TABLE IF EXISTS `log_validator`;
-CREATE TABLE `log_validator` (
-  `log_id` bigint(20) NOT NULL,
-  `log_checksum` longtext,
-  PRIMARY KEY (`log_id`)
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------
