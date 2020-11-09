@@ -71,7 +71,7 @@ class FhirObservationService extends FhirServiceBase
             $categoryCode->addCoding($categoryCoding);
             $observationResource->setCode($categoryCode);
         }
-       
+
         $subject = new FHIRReference();
         $subject->setReference('Patient/' . $dataRecord['puuid']);
         $observationResource->setSubject($subject);
@@ -102,7 +102,7 @@ class FhirObservationService extends FhirServiceBase
             }
             $observationResource->setValueQuantity($quantity);
         }
-        
+
 
         if (!empty($dataRecord['comments'])) {
             $observationResource->addNote(['text' => $dataRecord['comments']]);
@@ -156,6 +156,10 @@ class FhirObservationService extends FhirServiceBase
     }
 
     public function updateOpenEMRRecord($fhirResourceId, $updatedOpenEMRRecord)
+    {
+        // TODO: If Required in Future
+    }
+    public function createProvenanceResource($dataRecord = array(), $encode = false)
     {
         // TODO: If Required in Future
     }

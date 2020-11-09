@@ -361,6 +361,8 @@ if (!empty($glrow)) {
         } elseif ($gl_name == 'css_header') {
             //Escape css file name using 'attr' for security (prevent XSS).
             $GLOBALS[$gl_name] = $web_root . '/public/themes/' . attr($gl_value) . '?v=' . $v_js_includes;
+            $GLOBALS['compact_header'] = $web_root . '/public/themes/compact_' . attr($gl_value) . '?v=' . $v_js_includes;
+            $compact_header = $GLOBALS['compact_header'];
             $css_header = $GLOBALS[$gl_name];
             $temp_css_theme_name = $gl_value;
         } elseif ($gl_name == 'weekend_days') {
@@ -448,6 +450,8 @@ if (!empty($glrow)) {
             //Escape css file name using 'attr' for security (prevent XSS).
             $GLOBALS['css_header'] = $web_root . '/public/themes/' . attr($new_theme) . '?v=' . $v_js_includes;
             $css_header = $GLOBALS['css_header'];
+            $GLOBALS['compact_header'] = $web_root . '/public/themes/rtl_compact_' . attr($temp_css_theme_name) . '?v=' . $v_js_includes;
+            $compact_header = $GLOBALS['compact_header'];
         } else {
             // throw a warning if rtl'ed file does not exist.
             error_log("Missing theme file " . errorLogEscape($webserver_root) . '/public/themes/' . errorLogEscape($new_theme));
@@ -477,6 +481,8 @@ if (!empty($glrow)) {
     $openemr_name = 'OpenEMR';
     $css_header = "$web_root/public/themes/style_default.css";
     $GLOBALS['css_header'] = $css_header;
+    $compact_header = "$web_root/public/themes/style_default.css";
+    $GLOBALS['compact_header'] = $compact_header;
     $GLOBALS['schedule_start'] = 8;
     $GLOBALS['schedule_end'] = 17;
     $GLOBALS['calendar_interval'] = 15;
@@ -484,6 +490,14 @@ if (!empty($glrow)) {
     $GLOBALS['disable_non_default_groups'] = true;
     $GLOBALS['ippf_specific'] = false;
 }
+
+// Need to utilize a session since library/sql.inc is established before there are any globals established yet.
+//  This means that the first time, it will be skipped even if the global is turned on. However,
+//  after that it will then be turned on via the session.
+// Also important to note that changes to this global setting will not take effect during the same
+//  session (ie. user needs to logout) since not worth it to use resources to open session and write to it
+//  for every call to interface/globals.php .
+$_SESSION["enable_database_connection_pooling"] = $GLOBALS["enable_database_connection_pooling"];
 
 // If >0 this will enforce a separate PHP session for each top-level
 // browser window.  You must log in separately for each.  This is not
